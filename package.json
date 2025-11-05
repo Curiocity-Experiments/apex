@@ -9,7 +9,10 @@
     "lint": "next lint",
     "prepare": "husky",
     "test": "jest",
-    "postinstall": "npm rebuild canvas --build-from-source=false"
+    "postinstall": "npm rebuild canvas --build-from-source=false",
+    "local:setup": "node scripts/init-local-db.js && node scripts/init-local-s3.js",
+    "local:db": "node scripts/init-local-db.js",
+    "local:s3": "node scripts/init-local-s3.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.674.0",
