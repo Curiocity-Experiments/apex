@@ -11,6 +11,7 @@ Curiocity is a Next.js application for document and resource management with par
 ## Development Commands
 
 ### Running the Application
+
 ```bash
 npm run dev          # Start development server with Turbo
 npm run build        # Build for production
@@ -18,6 +19,7 @@ npm start            # Start production server
 ```
 
 ### Testing and Linting
+
 ```bash
 npm test             # Run Jest tests
 npm run lint         # Run ESLint
@@ -26,6 +28,7 @@ npm run lint         # Run ESLint
 **Note:** ESLint and TypeScript checks are currently ignored during builds (see `next.config.js`). TypeScript strict mode is enabled but errors don't block builds.
 
 ### Code Formatting
+
 ```bash
 npx prettier --write <file>   # Format specific files
 ```
@@ -33,6 +36,7 @@ npx prettier --write <file>   # Format specific files
 Prettier is configured with Tailwind CSS plugin. Pre-commit hooks run via Husky with lint-staged.
 
 ### Deployment
+
 ```bash
 vercel --prod --force    # Manual deployment to Vercel
 ```
@@ -42,11 +46,13 @@ vercel --prod --force    # Manual deployment to Vercel
 ### Data Model
 
 The application uses three main DynamoDB tables:
+
 - **Documents**: Top-level containers organizing resources into folders
 - **Resources**: Actual file content stored as markdown (from parsing) with S3 URLs
 - **ResourceMeta**: Metadata for resources (name, notes, tags, summary, dates)
 
 Key types defined in `types/types.tsx`:
+
 - `Document`: Contains folders, each with multiple resources
 - `Resource`: File content with id, markdown, and S3 url
 - `ResourceMeta`: Metadata linking to both resource and document
@@ -93,6 +99,7 @@ context/
 ### State Management
 
 Three React Context providers wrap the application (see `app/layout.tsx`):
+
 - **AuthProvider**: NextAuth session management
 - **CurrentResourceProvider** (AppContext): Manages current resource/meta, file uploads, and S3 operations
 - **SwitchProvider**: UI state (view switching between documents/resources)
@@ -100,11 +107,13 @@ Three React Context providers wrap the application (see `app/layout.tsx`):
 ### AWS Integration
 
 **DynamoDB**: AWS SDK v3 (`@aws-sdk/client-dynamodb`, `@aws-sdk/lib-dynamodb`)
+
 - Connection initialized in API routes with region `us-west-1`
 - Table names from environment variables: `DOCUMENT_TABLE`, `RESOURCEMETA_TABLE`, `RESOURCE_TABLE`
 - Common operations in `app/api/db/route.ts`: `getObject`, `putObject`, `deleteObject`
 
 **S3**: File storage with `next-s3-upload` library
+
 - Bucket: `wdb-curiocity-bucket` (region `us-west-1`)
 - Files uploaded via `app/api/s3-upload/` endpoint
 - Image domains configured in `next.config.js`
@@ -119,7 +128,9 @@ Three React Context providers wrap the application (see `app/layout.tsx`):
 ## Important Patterns
 
 ### Path Aliases
+
 Use `@/*` to import from project root:
+
 ```typescript
 import { Resource } from '@/types/types';
 import { someUtil } from '@/lib/utils';
@@ -128,6 +139,7 @@ import { someUtil } from '@/lib/utils';
 **Note:** Not all imports currently use this pattern (known inconsistency).
 
 ### API Route Pattern
+
 ```typescript
 // app/api/some-endpoint/route.ts
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -142,6 +154,7 @@ export async function GET(request: Request) {
 ```
 
 ### Context Usage
+
 ```typescript
 // In components:
 import { useCurrentResource } from '@/context/AppContext';
@@ -159,6 +172,7 @@ const { currentResource, fetchResourceAndMeta } = useCurrentResource();
 ## Environment Variables
 
 Required variables (see `.env` - not in repo):
+
 - `NEXTAUTH_URL`: Application URL (localhost:3000 for dev, Vercel URL for prod)
 - `NEXTAUTH_SECRET`: NextAuth secret key
 - `GOOGLE_ID`, `GOOGLE_SECRET`: Google OAuth credentials
@@ -167,7 +181,68 @@ Required variables (see `.env` - not in repo):
 - `LLAMA_CLOUD_API_KEY`: LlamaCloud API for parsing
 - `DISABLE_PARSING`: Set to `true` to disable resource parsing
 
-## Testing
+## Testing Guidelines
+
+**Reference**: See [docs/TDD-GUIDE.md](./docs/TDD-GUIDE.md) and [docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md](./docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md)
+
+### Key Principles
+
+1. **Test Behavior, Not Implementation**
+   - ✅ Test WHAT is returned
+   - ❌ Don't test HOW it's done
+   - See: docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md
+
+2. **RED-GREEN-REFACTOR**
+   - Write failing test first (RED)
+   - Make it pass (GREEN)
+   - Clean up code (REFACTOR)
+
+3. **Coverage Goals**
+   - Domain entities: 100%
+   - Repositories: 100%
+   - Services: 95%
+   - Overall: 90%+
+
+### Running Tests
+
+```bash
+npm test                  # Run all tests
+npm test:watch           # Watch mode
+npm test:coverage        # With coverage report
+npm test Report.test.ts  # Single file
+```
+
+### Example Test (Behavior-Focused)
+
+```typescript
+it('should return active reports for user', async () => {
+  const mockReports = [
+    { id: 'r1', userId: 'user-123', deletedAt: null },
+    { id: 'r2', userId: 'user-123', deletedAt: null },
+  ];
+  prismaMock.report.findMany.mockResolvedValue(mockReports);
+
+  const result = await repository.findByUserId('user-123');
+
+  // ✅ Test BEHAVIOR
+  expect(result).toHaveLength(2);
+  result.forEach((r) => {
+    expect(r.userId).toBe('user-123');
+    expect(r.deletedAt).toBeNull();
+  });
+});
+```
+
+**Anti-Pattern to Avoid**:
+
+```typescript
+// ❌ DON'T test implementation
+expect(prismaMock.report.findMany).toHaveBeenCalledWith({
+  /* ... */
+});
+```
+
+## Test Configuration
 
 - **Jest** configured with `ts-jest` and `jsdom` environment
 - Test files: `**/__tests__/**/*.test.ts(x)`

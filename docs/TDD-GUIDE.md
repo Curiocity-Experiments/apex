@@ -19,6 +19,22 @@
 8. [CI/CD Integration](#8-cicd-integration)
 9. [Coverage Goals & Metrics](#9-coverage-goals--metrics)
 10. [Troubleshooting & FAQ](#10-troubleshooting--faq)
+11. [Testing Anti-Patterns](#11-testing-anti-patterns)
+
+---
+
+## Important: Behavior vs Implementation Testing
+
+**⚠️ CRITICAL**: Before writing tests, read [TDD-BEHAVIOR-VS-IMPLEMENTATION.md](./TDD-BEHAVIOR-VS-IMPLEMENTATION.md)
+
+**TL;DR**:
+
+- ✅ Test WHAT is returned (behavior)
+- ❌ Don't test HOW it's done (implementation)
+- 95% of tests should be behavior-focused
+- Only integration tests should test implementation details
+
+See the dedicated guide for examples and patterns.
 
 ---
 
@@ -435,20 +451,23 @@ describe('ReportEntity', () => {
 **1. Unit Tests (with mocked Prisma)**
 
 ```typescript
-// repositories/implementations/__tests__/PrismaReportRepository.test.ts
-import { PrismaReportRepository } from '../PrismaReportRepository';
-import { prismaMock } from '@/__tests__/utils/prismaMock';
+// repositories/__tests__/PrismaReportRepository.test.ts
+import { PrismaReportRepository } from '@/infrastructure/repositories/PrismaReportRepository';
+import { getMockPrisma } from '@/__tests__/utils/db/prisma-mock';
 
-jest.mock('@/lib/db', () => ({
-  prisma: prismaMock,
-}));
-
+/**
+ * IMPORTANT: These tests focus on BEHAVIOR (what is returned),
+ * not IMPLEMENTATION (how Prisma is called).
+ *
+ * See: docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md
+ */
 describe('PrismaReportRepository', () => {
   let repository: PrismaReportRepository;
+  let prismaMock: MockPrismaClient;
 
   beforeEach(() => {
-    repository = new PrismaReportRepository();
-    jest.clearAllMocks();
+    prismaMock = getMockPrisma();
+    repository = new PrismaReportRepository(prismaMock);
   });
 
   describe('findById', () => {
@@ -467,10 +486,10 @@ describe('PrismaReportRepository', () => {
 
       const result = await repository.findById('report-123');
 
-      expect(result).toEqual(mockReport);
-      expect(prismaMock.report.findUnique).toHaveBeenCalledWith({
-        where: { id: 'report-123', deletedAt: null },
-      });
+      // ✅ Test BEHAVIOR: verify correct data is returned
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('report-123');
+      expect(result?.name).toBe('Test Report');
     });
 
     it('should return null when not found', async () => {
@@ -478,49 +497,30 @@ describe('PrismaReportRepository', () => {
 
       const result = await repository.findById('nonexistent');
 
+      // ✅ Test BEHAVIOR: null when not found
       expect(result).toBeNull();
     });
   });
 
-  describe('save', () => {
-    it('should create new report', async () => {
-      const report = {
-        id: 'report-123',
+  describe('findByUserId', () => {
+    it('should exclude deleted reports by default', async () => {
+      const activeReport = {
+        id: 'report-1',
         userId: 'user-123',
-        name: 'New Report',
-        content: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        name: 'Active',
         deletedAt: null,
+        /* ... */
       };
 
-      prismaMock.report.upsert.mockResolvedValue(report);
+      // Mock returns only active reports
+      prismaMock.report.findMany.mockResolvedValue([activeReport]);
 
-      await repository.save(report);
+      const result = await repository.findByUserId('user-123');
 
-      expect(prismaMock.report.upsert).toHaveBeenCalledWith({
-        where: { id: report.id },
-        create: expect.objectContaining({ name: 'New Report' }),
-        update: expect.objectContaining({ name: 'New Report' }),
-      });
-    });
-  });
-
-  describe('delete', () => {
-    it('should soft delete report', async () => {
-      const mockReport = {
-        id: 'report-123',
-        deletedAt: new Date(),
-      };
-
-      prismaMock.report.update.mockResolvedValue(mockReport as any);
-
-      await repository.delete('report-123');
-
-      expect(prismaMock.report.update).toHaveBeenCalledWith({
-        where: { id: 'report-123' },
-        data: { deletedAt: expect.any(Date) },
-      });
+      // ✅ Test BEHAVIOR: only active reports returned
+      expect(result).toHaveLength(1);
+      expect(result[0].deletedAt).toBeNull();
+      expect(result[0].name).toBe('Active');
     });
   });
 });
@@ -649,11 +649,10 @@ describe('ReportService', () => {
 
       const report = await service.createReport(userId, name);
 
+      // ✅ Test BEHAVIOR: verify service returns correct result
       expect(report.name).toBe('Q4 Report');
       expect(report.userId).toBe(userId);
-      expect(mockRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Q4 Report' }),
-      );
+      expect(report.id).toBeDefined();
     });
 
     it('should trim report name', async () => {
@@ -715,10 +714,9 @@ describe('ReportService', () => {
         { name: 'New Name' },
       );
 
+      // ✅ Test BEHAVIOR: verify updated values returned
       expect(updated.name).toBe('New Name');
-      expect(mockRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'New Name' }),
-      );
+      expect(updated.id).toBe(existingReport.id);
     });
 
     it('should update report content', async () => {
@@ -750,9 +748,10 @@ describe('ReportService', () => {
       mockRepo.findById.mockResolvedValue(mockReport);
       mockRepo.delete.mockResolvedValue();
 
-      await service.deleteReport(mockReport.id, 'user-123');
-
-      expect(mockRepo.delete).toHaveBeenCalledWith(mockReport.id);
+      // ✅ Test BEHAVIOR: method completes without error
+      await expect(
+        service.deleteReport(mockReport.id, 'user-123'),
+      ).resolves.not.toThrow();
     });
 
     it('should throw error when unauthorized', async () => {
@@ -1904,6 +1903,97 @@ A: Use `jest.useFakeTimers()` and control time in tests.
 
 **Q: Should I test third-party libraries?**
 A: No, assume they work. Mock them and test your integration with them.
+
+---
+
+## 11. Testing Anti-Patterns
+
+### ❌ Anti-Pattern 1: Testing Implementation
+
+**Problem**:
+
+```typescript
+// ❌ DON'T: Test how Prisma is called
+expect(prismaMock.report.findMany).toHaveBeenCalledWith({
+  where: { userId: 'user-123', deletedAt: null },
+});
+```
+
+**Solution**:
+
+```typescript
+// ✅ DO: Test what is returned
+expect(result).toHaveLength(2);
+expect(result[0].userId).toBe('user-123');
+```
+
+**Why**: Implementation tests break on refactoring, behavior tests don't.
+
+**Reference**: See [TDD-BEHAVIOR-VS-IMPLEMENTATION.md](./TDD-BEHAVIOR-VS-IMPLEMENTATION.md)
+
+---
+
+### ❌ Anti-Pattern 2: Testing Private Methods
+
+**Problem**:
+
+```typescript
+// ❌ DON'T: Test internal methods
+expect(service['internalHelper']).toHaveBeenCalled();
+```
+
+**Solution**:
+
+```typescript
+// ✅ DO: Test public API behavior
+expect(result).toBe(expectedValue);
+```
+
+---
+
+### ❌ Anti-Pattern 3: Multiple Assertions for Same Behavior
+
+**Problem**:
+
+```typescript
+// ❌ DON'T: Over-specify
+expect(result.property1).toBe('value');
+expect(result.property2).toBe('value');
+// ... 10 more assertions
+expect(prismaMock.method).toHaveBeenCalled(); // Also redundant
+```
+
+**Solution**:
+
+```typescript
+// ✅ DO: Test key properties
+expect(result).toMatchObject({
+  property1: 'value',
+  property2: 'value',
+});
+```
+
+---
+
+### ❌ Anti-Pattern 4: Testing Framework Features
+
+**Problem**:
+
+```typescript
+// ❌ DON'T: Test that Prisma works
+expect(prismaMock.report.findUnique).toBeDefined();
+```
+
+**Solution**:
+
+```typescript
+// ✅ DO: Test YOUR code
+expect(await repository.findById('id')).not.toBeNull();
+```
+
+---
+
+**Quick Check**: If refactoring breaks your test but behavior is unchanged, you're testing implementation.
 
 ---
 
