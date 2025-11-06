@@ -9,6 +9,7 @@
 ## Decision Framework
 
 Each decision evaluated on:
+
 - ⚡ **Development Speed**: Time to implement
 - 💰 **Cost**: Infrastructure and service costs
 - 🎯 **User Experience**: Impact on end-user
@@ -27,6 +28,7 @@ Each decision evaluated on:
 ### ✅ **DECISION: PostgreSQL (Docker Container)**
 
 **Reasoning**:
+
 - **Parity with Production**: NEXT phase uses PostgreSQL → seamless transition
 - **Full-Text Search**: Built-in FTS capabilities (needed for NEXT)
 - **JSON Support**: Better JSONB handling (for future rich text storage)
@@ -34,6 +36,7 @@ Each decision evaluated on:
 - **Docker Setup**: Simple one-liner: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16`
 
 **Rejected: SQLite**
+
 - ❌ Transition required for NEXT phase (SQLite → PostgreSQL)
 - ❌ Limited full-text search (FTS5 extension different from PostgreSQL)
 - ❌ No JSONB type (would need TEXT + manual parsing)
@@ -41,6 +44,7 @@ Each decision evaluated on:
 - **Verdict**: Not worth transition complexity later
 
 **Setup Command**:
+
 ```bash
 docker run -d \
   --name apex-db \
@@ -52,6 +56,7 @@ docker run -d \
 ```
 
 **Connection String**:
+
 ```
 postgresql://postgres:devpassword@localhost:5432/apex_dev
 ```
@@ -63,6 +68,7 @@ postgresql://postgres:devpassword@localhost:5432/apex_dev
 ### ✅ **DECISION: React SimpleMDE (react-simplemde-editor)**
 
 **Reasoning**:
+
 - **Simplicity**: Drop-in component, minimal configuration
 - **Bundle Size**: ~50KB (lightweight)
 - **Features**: Preview, toolbar, keyboard shortcuts
@@ -72,25 +78,30 @@ postgresql://postgres:devpassword@localhost:5432/apex_dev
 **Alternatives Considered**:
 
 **React Markdown Editor** (rejected):
+
 - ❌ Less popular (fewer GitHub stars)
 - ❌ Limited documentation
 
 **CodeMirror 6** (rejected):
+
 - ❌ Heavy setup (need to configure markdown mode, toolbar, etc.)
 - ✅ Powerful but overkill for MVP
 - **Verdict**: Save for advanced use cases
 
 **Monaco Editor** (rejected):
+
 - ❌ Very large bundle (~2MB)
 - ❌ Designed for code editing, not writing
 - **Verdict**: Wrong tool for the job
 
 **Setup**:
+
 ```bash
 npm install react-simplemde-editor easymde
 ```
 
 **Usage**:
+
 ```tsx
 import SimpleMDE from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
@@ -102,7 +113,7 @@ import 'easymde/dist/easymde.min.css';
     spellChecker: false,
     autosave: { enabled: true, delay: 30000 },
   }}
-/>
+/>;
 ```
 
 ---
@@ -112,6 +123,7 @@ import 'easymde/dist/easymde.min.css';
 ### ✅ **DECISION: Resend.com**
 
 **Reasoning**:
+
 - **Developer Experience**: Best-in-class DX (simple API, great docs)
 - **Free Tier**: 100 emails/day, 3,000/month (sufficient for NOW testing)
 - **Reliability**: Built by ex-Postmark team (email delivery experts)
@@ -122,34 +134,40 @@ import 'easymde/dist/easymde.min.css';
 **Alternatives Considered**:
 
 **SendGrid** (rejected):
+
 - ❌ Complex setup (domain verification, DKIM, SPF records)
 - ❌ Steeper learning curve
 - ✅ More features (but overkill for magic links)
 - **Verdict**: Too much overhead for NOW
 
 **AWS SES** (rejected):
+
 - ❌ Requires AWS account setup
 - ❌ Region-specific (need to move out of sandbox)
 - ❌ Complex IAM permissions
 - **Verdict**: Save for enterprise LATER phase
 
 **Local SMTP (MailHog)** (rejected):
+
 - ✅ Great for pure local testing
 - ❌ Can't test real email delivery
 - ❌ Extra Docker container to manage
 - **Verdict**: Use Resend's test mode instead
 
 **Setup**:
+
 ```bash
 npm install resend
 ```
 
 **Environment Variable**:
+
 ```
 RESEND_API_KEY=re_... (from resend.com dashboard)
 ```
 
 **Usage**:
+
 ```typescript
 import { Resend } from 'resend';
 
@@ -170,6 +188,7 @@ await resend.emails.send({
 ### ✅ **DECISION: Use localhost URLs with separate dev OAuth apps**
 
 **Reasoning**:
+
 - **Security**: Production and dev OAuth apps isolated
 - **Callback URLs**:
   - Dev: `http://localhost:3000/api/auth/callback/google`
@@ -177,6 +196,7 @@ await resend.emails.send({
 - **Best Practice**: Never mix dev and prod credentials
 
 **Google OAuth Setup (Dev)**:
+
 1. Go to Google Cloud Console
 2. Create project: "Apex Dev"
 3. Enable Google+ API
@@ -185,6 +205,7 @@ await resend.emails.send({
 6. Copy Client ID and Secret → `.env.local`
 
 **LinkedIn OAuth Setup (Dev)**:
+
 1. Go to LinkedIn Developers
 2. Create app: "Apex Dev"
 3. Redirect URLs: `http://localhost:3000/api/auth/callback/linkedin`
@@ -192,6 +213,7 @@ await resend.emails.send({
 5. Copy Client ID and Secret → `.env.local`
 
 **Environment Variables**:
+
 ```env
 # .env.local (NOT committed to git)
 NEXTAUTH_URL=http://localhost:3000
@@ -211,25 +233,31 @@ LINKEDIN_CLIENT_SECRET=...
 ### ✅ **DECISION: Yes, start with free tier (1,000 pages/day)**
 
 **Reasoning**:
+
 - **NOW Phase Usage**: 1-2 developers, < 50 documents/day
 - **Free Tier**: 1,000 pages/day (enough for 50 x 20-page documents)
 - **Paid Tier**: $0.003/page (500 pages = $1.50)
 - **Upgrade Path**: If needed in NEXT, paid tier is cheap ($30/month for 10K pages)
 
 **Monitoring**:
+
 - Add usage logging to track pages processed
 - Alert if approaching 80% of daily limit
 - Implement queue if limit hit (process remaining tomorrow)
 
 **Environment Variable**:
+
 ```env
 LLAMA_CLOUD_API_KEY=llx-... (from cloud.llamaindex.ai)
 ```
 
 **Usage Tracking**:
+
 ```typescript
 // Log after each parse
-console.log(`LlamaParse: Processed ${pageCount} pages (${totalToday}/1000 daily limit)`);
+console.log(
+  `LlamaParse: Processed ${pageCount} pages (${totalToday}/1000 daily limit)`,
+);
 ```
 
 ---
@@ -239,6 +267,7 @@ console.log(`LlamaParse: Processed ${pageCount} pages (${totalToday}/1000 daily 
 ### ✅ **DECISION: SHA-256**
 
 **Reasoning**:
+
 - **Security**: SHA-256 cryptographically secure (MD5 has collisions)
 - **Duplicate Detection**: Need collision resistance for accurate deduplication
 - **Performance**: SHA-256 fast enough (< 100ms for 10MB file in Node.js)
@@ -246,11 +275,13 @@ console.log(`LlamaParse: Processed ${pageCount} pages (${totalToday}/1000 daily 
 - **File Integrity**: Can verify file hasn't been corrupted
 
 **Rejected: MD5**
+
 - ❌ Collision vulnerabilities (two different files can have same hash)
 - ✅ 2x faster than SHA-256
 - **Verdict**: Speed gain not worth collision risk
 
 **Implementation**:
+
 ```typescript
 import crypto from 'crypto';
 import fs from 'fs';
@@ -280,6 +311,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 ### ✅ **DECISION: Supabase (PostgreSQL + Storage + Auth)**
 
 **Reasoning**:
+
 - **All-in-One**: Database + file storage + authentication in one platform
 - **PostgreSQL**: Fully managed PostgreSQL 15
 - **Free Tier**: 500MB database, 1GB storage (enough for early users)
@@ -291,6 +323,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 **Alternatives Considered**:
 
 **Neon** (rejected):
+
 - ✅ Fastest PostgreSQL (serverless, auto-scaling)
 - ✅ Free tier: 3GB storage
 - ❌ No integrated file storage → need separate R2/S3
@@ -298,6 +331,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 - **Verdict**: Great DB, but need to add more services
 
 **PlanetScale** (rejected):
+
 - ✅ MySQL-based, excellent scaling
 - ❌ MySQL not PostgreSQL (different FTS, no JSONB)
 - ❌ Would require changing NOW phase database choice
@@ -306,16 +340,17 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 
 **Comparison Table**:
 
-| Feature | Supabase | Neon | PlanetScale |
-|---------|----------|------|-------------|
-| Database | PostgreSQL | PostgreSQL | MySQL |
-| Free Tier | 500MB DB, 1GB files | 3GB DB | 5GB DB |
-| File Storage | ✅ Built-in | ❌ Need R2/S3 | ❌ Need R2/S3 |
-| Auth | ✅ Built-in | ❌ Need NextAuth | ❌ Need NextAuth |
-| Pricing | $25/mo | $19/mo | $39/mo |
-| **Winner** | ✅ | - | - |
+| Feature      | Supabase            | Neon             | PlanetScale      |
+| ------------ | ------------------- | ---------------- | ---------------- |
+| Database     | PostgreSQL          | PostgreSQL       | MySQL            |
+| Free Tier    | 500MB DB, 1GB files | 3GB DB           | 5GB DB           |
+| File Storage | ✅ Built-in         | ❌ Need R2/S3    | ❌ Need R2/S3    |
+| Auth         | ✅ Built-in         | ❌ Need NextAuth | ❌ Need NextAuth |
+| Pricing      | $25/mo              | $19/mo           | $39/mo           |
+| **Winner**   | ✅                  | -                | -                |
 
 **Setup**:
+
 1. Create project on supabase.com
 2. Copy connection string → `DATABASE_URL` env var
 3. Run database schema setup
@@ -329,6 +364,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 ### ✅ **DECISION: Supabase Storage**
 
 **Reasoning** (based on Supabase database choice):
+
 - **Integration**: Seamless with Supabase database (same dashboard, same billing)
 - **Row-Level Security**: File access controlled by database policies (powerful!)
 - **Free Tier**: 1GB storage (enough for 100-200 PDF documents)
@@ -338,6 +374,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 - **Developer Experience**: Simple JavaScript SDK
 
 **Rejected: Cloudflare R2**
+
 - ✅ Zero egress fees (huge cost saving at scale)
 - ✅ S3-compatible API
 - ❌ Separate service to manage (more complexity)
@@ -347,22 +384,23 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 
 **Cost Comparison** (1000 users, 5 reports each, 20 PDFs per report = 100K PDFs @ 2MB avg = 200GB):
 
-| Provider | Storage | Egress (10GB/mo) | Total/mo |
-|----------|---------|------------------|----------|
-| Supabase | $4.20 | $0.90 | **$5.10** |
-| R2 | $3.00 | $0.00 | **$3.00** |
-| S3 | $4.60 | $0.90 | **$5.50** |
+| Provider | Storage | Egress (10GB/mo) | Total/mo  |
+| -------- | ------- | ---------------- | --------- |
+| Supabase | $4.20   | $0.90            | **$5.10** |
+| R2       | $3.00   | $0.00            | **$3.00** |
+| S3       | $4.60   | $0.90            | **$5.50** |
 
 **Winner for NOW/NEXT**: Supabase (simplicity > $2/month savings)
 **Upgrade Path**: Move to R2 in LATER if egress costs exceed $50/month
 
 **Setup**:
+
 ```typescript
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 );
 
 // Upload file
@@ -383,6 +421,7 @@ const { data: signedUrl } = await supabase.storage
 ### ✅ **DECISION: Sentry (Errors) + Vercel Analytics (Performance)**
 
 **Reasoning**:
+
 - **Sentry**: Best-in-class error tracking
   - Free tier: 5,000 errors/month (sufficient for NEXT)
   - Source maps for debugging minified code
@@ -394,6 +433,7 @@ const { data: signedUrl } = await supabase.storage
 - **Cost**: Free for NEXT phase, ~$26/month for 50K errors in LATER
 
 **Rejected: Datadog / New Relic**
+
 - ❌ Expensive ($15-100/month minimum)
 - ❌ Overkill for NEXT phase (10-50 users)
 - **Verdict**: Save for enterprise LATER phase if needed
@@ -401,6 +441,7 @@ const { data: signedUrl } = await supabase.storage
 **Setup**:
 
 **Sentry** (`sentry.client.config.ts`):
+
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -412,6 +453,7 @@ Sentry.init({
 ```
 
 **Vercel Analytics** (`app/layout.tsx`):
+
 ```typescript
 import { Analytics } from '@vercel/analytics/react';
 
@@ -434,6 +476,7 @@ export default function RootLayout({ children }) {
 ### ✅ **DECISION: Free Tier + Paid Tier ($10/month)**
 
 **Reasoning**:
+
 - **Free Tier**: Attract users, validate product
   - Limits: 3 reports, 50 documents, 1GB storage
   - Enough for light users / evaluation
@@ -444,11 +487,13 @@ export default function RootLayout({ children }) {
 - **Revenue Goal**: 50 paid users = $500/month (covers infrastructure)
 
 **Why Not Free-Only**:
+
 - ❌ Infrastructure costs scale with users (database, storage, LlamaParse)
 - ❌ No revenue = unsustainable
 - ❌ Free users often less engaged
 
 **Why Not Paid-Only**:
+
 - ❌ Barrier to entry (no trial)
 - ❌ Can't validate product-market fit without users
 
@@ -471,6 +516,7 @@ export default function RootLayout({ children }) {
 ### ✅ **DECISION: Team Plan ($25/month, up to 5 users)**
 
 **Reasoning**:
+
 - **Free Tier**: Individual use only (no sharing)
 - **Pro Tier**: $10/month individual (no collaboration)
 - **Team Tier**: $25/month for up to 5 users ($5/user/month)
@@ -480,10 +526,12 @@ export default function RootLayout({ children }) {
 - **Enterprise**: Custom pricing for 20+ users
 
 **Why Not Free Collaboration**:
+
 - ❌ Real-time sync infrastructure expensive (WebSocket servers, CRDT storage)
 - ❌ Encourages abuse (create infinite shared reports)
 
 **Competitive Pricing**:
+
 - Notion: $10/user/month (team plan)
 - Google Workspace: $6/user/month
 - Dropbox: $15/user/month
@@ -496,6 +544,7 @@ export default function RootLayout({ children }) {
 ### ✅ **DECISION: Progressive Web App (PWA)**
 
 **Reasoning**:
+
 - **PWA Advantages**:
   - ✅ Single codebase (web + mobile)
   - ✅ No app store approval (instant updates)
@@ -509,6 +558,7 @@ export default function RootLayout({ children }) {
   - ❌ More maintenance (2 codebases)
 
 **PWA Features**:
+
 - Install prompt: "Add Apex to home screen"
 - Offline mode: Cache last 5 viewed reports
 - Push notifications: "John commented on your report"
@@ -517,6 +567,7 @@ export default function RootLayout({ children }) {
 **Upgrade Path**: If PWA insufficient, consider React Native or Capacitor (wraps PWA)
 
 **Setup** (`next.config.js` + `next-pwa`):
+
 ```bash
 npm install next-pwa
 ```
@@ -534,6 +585,7 @@ module.exports = withPWA({
 ```
 
 **Manifest** (`public/manifest.json`):
+
 ```json
 {
   "name": "Apex",
@@ -565,6 +617,7 @@ module.exports = withPWA({
 ### ✅ **DECISION: OpenAI Whisper API**
 
 **Reasoning**:
+
 - **Accuracy**: Best-in-class transcription (98%+ accuracy)
 - **Pricing**: $0.006/minute ($0.36 for 1-hour call)
 - **Languages**: 99 languages (future-proof for international)
@@ -574,6 +627,7 @@ module.exports = withPWA({
 **Alternatives Considered**:
 
 **AssemblyAI** (rejected):
+
 - ✅ Similar accuracy
 - ✅ Real-time transcription
 - ❌ More expensive ($0.00025/second = $0.90/hour)
@@ -581,6 +635,7 @@ module.exports = withPWA({
 - **Verdict**: 2.5x more expensive
 
 **Deepgram** (rejected):
+
 - ✅ Fastest transcription (real-time)
 - ✅ Cheapest ($0.0043/minute = $0.26/hour)
 - ❌ Requires streaming setup (more complex)
@@ -588,6 +643,7 @@ module.exports = withPWA({
 - **Verdict**: Save for real-time use cases
 
 **Cost Example** (100 users, 5 hours audio/month each):
+
 - **Whisper**: 500 hours × $0.36 = **$180/month**
 - **AssemblyAI**: 500 hours × $0.90 = **$450/month**
 - **Deepgram**: 500 hours × $0.26 = **$130/month**
@@ -595,6 +651,7 @@ module.exports = withPWA({
 **Decision**: Whisper (best balance of accuracy and cost)
 
 **Usage**:
+
 ```typescript
 import OpenAI from 'openai';
 
@@ -618,6 +675,7 @@ const transcription = await openai.audio.transcriptions.create({
 ### ✅ **DECISION: Self-Hosted Typesense**
 
 **Reasoning**:
+
 - **Typesense vs Alternatives**:
   - ✅ Open source (can self-host for $10/month DigitalOcean droplet)
   - ✅ Fast (< 50ms search for 1M documents)
@@ -630,18 +688,21 @@ const transcription = await openai.audio.transcriptions.create({
 - **Upgrade Path**: Start self-hosted, move to Typesense Cloud if scaling issues
 
 **Rejected: Meilisearch**
+
 - ✅ Similar to Typesense
 - ❌ Slower indexing (batch updates)
 - ❌ Less battle-tested
 - **Verdict**: Typesense more mature
 
 **Rejected: Algolia**
+
 - ✅ Best-in-class search
 - ✅ Managed service (zero ops)
 - ❌ Expensive ($100+/month)
 - **Verdict**: Save for enterprise tier
 
 **Self-Hosted Setup** (DigitalOcean):
+
 ```bash
 # Docker Compose
 version: '3.8'
@@ -656,6 +717,7 @@ services:
 ```
 
 **Indexing**:
+
 ```typescript
 import Typesense from 'typesense';
 
@@ -677,13 +739,16 @@ await client.collections().create({
 });
 
 // Index document
-await client.collections('documents').documents().create({
-  filename: 'Q3-earnings.pdf',
-  content: 'Revenue grew 23% YoY...',
-  tags: ['financial-data', 'q3-2024'],
-  report_id: 'report-123',
-  created_at: Date.now(),
-});
+await client
+  .collections('documents')
+  .documents()
+  .create({
+    filename: 'Q3-earnings.pdf',
+    content: 'Revenue grew 23% YoY...',
+    tags: ['financial-data', 'q3-2024'],
+    report_id: 'report-123',
+    created_at: Date.now(),
+  });
 
 // Search with typo tolerance
 const results = await client.collections('documents').documents().search({
@@ -701,6 +766,7 @@ const results = await client.collections('documents').documents().search({
 ### ✅ **DECISION: Free API Access (Rate Limited)**
 
 **Reasoning**:
+
 - **LATER Phase Goals**: Drive adoption, enable integrations
 - **Free Tier API**:
   - 100 requests/minute per user
@@ -710,12 +776,14 @@ const results = await client.collections('documents').documents().search({
 - **Upgrade Path**: Add paid tier if high-volume users request (e.g., $50/month for 10K requests/hour)
 
 **Why Free**:
+
 - ✅ Encourages integrations (Zapier, n8n, custom scripts)
 - ✅ Competitive advantage (many tools don't offer API)
 - ✅ Increases lock-in (users build workflows)
 - ❌ Con: Potential abuse (mitigated by rate limiting)
 
 **Rate Limiting** (using Upstash Redis):
+
 ```typescript
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
@@ -739,44 +807,173 @@ export async function GET(req: Request) {
 
 ---
 
+## 16. Testing Methodology: TDD vs Test-After
+
+### ✅ **DECISION: Strict Test-Driven Development (TDD)**
+
+**Reasoning**:
+
+- **Quality First**: Tests drive design, not validate it after
+- **Refactoring Safety**: High coverage from day 1 enables fearless refactoring
+- **Living Documentation**: Tests serve as executable specification
+- **Bug Prevention**: Catch issues at write-time, not runtime
+- **Clean Architecture**: TDD naturally enforces SOLID principles and loose coupling
+- **Financial Data Platform**: High correctness requirements justify investment in quality
+
+**Why TDD (Not Test-After)**:
+
+- ✅ **Design Quality**: Forces thinking about interfaces before implementation
+- ✅ **Coverage**: Achieves 90-100% coverage naturally (vs 30-50% typical)
+- ✅ **Refactoring**: Can change code fearlessly with comprehensive safety net
+- ✅ **Debugging Time**: 70% reduction (bugs caught at write-time)
+- ✅ **Production Bugs**: 80% reduction (industry data)
+- ✅ **Onboarding**: Tests document expected behavior for new developers
+
+**Trade-offs**:
+
+- ⏱️ **Initial Development**: ~30% slower upfront
+- ✅ **Long-term Velocity**: 3x faster after initial build (easier to change)
+- ✅ **Maintenance**: Dramatically lower cost (high test coverage)
+- ✅ **Confidence**: Ship with certainty, not hope
+
+**Rejected: Test-After Approach**:
+
+- ❌ Tests become afterthought (often skipped under pressure)
+- ❌ Low coverage (typically 30-50%)
+- ❌ Hard to test tightly coupled code (requires refactoring)
+- ❌ Bugs found late in cycle (QA or production)
+- ❌ Tests validate implementation, don't drive design
+- **Verdict**: Unacceptable for financial data platform
+
+**Implementation**:
+
+- **Red-Green-Refactor**: Write failing test → Make it pass → Clean up
+- **Test-First Always**: No production code without a failing test
+- **Coverage Targets**:
+  - Domain entities: 100%
+  - Services: 95%
+  - Repositories: 90%
+  - API routes: 90%
+  - Components: 80%
+  - Overall: 90%+
+- **CI/CD Enforcement**: Tests block merges if failing or coverage drops
+
+**Tools & Stack**:
+
+```typescript
+// Test Framework
+"jest": "^29.7.0",                       // Test runner
+"@testing-library/react": "^16.0.1",     // Component testing
+"@testing-library/jest-dom": "^6.6.2",   // DOM matchers
+
+// API Testing
+"supertest": "^6.3.3",                   // HTTP integration tests
+"node-mocks-http": "^1.13.0",            // Mock Next.js requests
+
+// Mocking
+"jest-mock-extended": "^3.0.5",          // Deep mocking (Prisma)
+"msw": "^2.0.0",                         // Mock Service Worker (API mocking)
+
+// Coverage
+"@jest/globals": "^29.7.0",              // Jest globals
+"jest-environment-jsdom": "^29.7.0"      // Browser environment
+```
+
+**Test Organization**:
+
+```
+domain/entities/__tests__/Report.test.ts         # Unit tests
+services/__tests__/ReportService.test.ts         # Unit tests (mocked repos)
+repositories/__tests__/Prisma...integration.test.ts  # Integration tests
+app/api/reports/__tests__/route.test.ts         # API tests
+components/reports/__tests__/ReportList.test.tsx # Component tests
+__tests__/e2e/reportFlow.test.ts                 # E2E tests (minimal)
+```
+
+**Example TDD Cycle**:
+
+```typescript
+// 1. RED - Write failing test
+describe('ReportService', () => {
+  it('should create report with valid name', async () => {
+    const report = await service.createReport('user-123', 'Q4 Report');
+    expect(report.name).toBe('Q4 Report');
+  });
+});
+// Run test → ❌ Fails (method doesn't exist)
+
+// 2. GREEN - Make it pass
+class ReportService {
+  async createReport(userId: string, name: string): Promise<Report> {
+    return ReportEntity.create({ userId, name });
+  }
+}
+// Run test → ✅ Passes
+
+// 3. REFACTOR - Clean up while keeping tests green
+class ReportService {
+  async createReport(userId: string, name: string): Promise<Report> {
+    const report = ReportEntity.create({ userId, name: name.trim() });
+    await this.reportRepository.save(report);
+    return report;
+  }
+}
+// Run test → ✅ Still passes
+```
+
+**ROI Calculation**:
+
+- Development time increase: 30% (upfront investment)
+- Debugging time decrease: 70% (catch bugs early)
+- Production bugs decrease: 80% (high coverage)
+- Refactoring velocity increase: 3x (test safety net)
+- **Net ROI**: 3x faster feature velocity after initial 6 months
+
+**Reference**: See `docs/TDD-GUIDE.md` for comprehensive TDD practices and patterns.
+
+---
+
 # DECISION SUMMARY TABLE
 
 ## NOW Phase
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Database** | PostgreSQL (Docker) | Production parity, seamless transition |
-| **Markdown Editor** | React SimpleMDE | Lightweight, simple API |
-| **Email Service** | Resend.com | Best DX, reliable, free tier |
-| **OAuth Setup** | Separate dev apps | Security best practice |
-| **LlamaParse Quota** | Free tier (1K pages/day) | Sufficient for development |
-| **File Hash** | SHA-256 | Secure, collision-resistant |
+| Decision             | Choice                               | Rationale                              |
+| -------------------- | ------------------------------------ | -------------------------------------- |
+| **Database**         | PostgreSQL (Docker)                  | Production parity, seamless transition |
+| **Markdown Editor**  | React SimpleMDE                      | Lightweight, simple API                |
+| **Email Service**    | Resend.com                           | Best DX, reliable, free tier           |
+| **OAuth Setup**      | Separate dev apps                    | Security best practice                 |
+| **LlamaParse Quota** | Free tier (1K pages/day)             | Sufficient for development             |
+| **File Hash**        | SHA-256                              | Secure, collision-resistant            |
+| **Testing**          | Strict TDD (Test-Driven Development) | Quality first, 90%+ coverage           |
 
 ## NEXT Phase
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Cloud Database** | Supabase PostgreSQL | All-in-one, integrated storage |
-| **File Storage** | Supabase Storage | Integrated, row-level security |
-| **Monitoring** | Sentry + Vercel Analytics | Error tracking + performance |
-| **Pricing Model** | Free tier + $10/month Pro | Freemium for adoption + revenue |
+| Decision           | Choice                    | Rationale                       |
+| ------------------ | ------------------------- | ------------------------------- |
+| **Cloud Database** | Supabase PostgreSQL       | All-in-one, integrated storage  |
+| **File Storage**   | Supabase Storage          | Integrated, row-level security  |
+| **Monitoring**     | Sentry + Vercel Analytics | Error tracking + performance    |
+| **Pricing Model**  | Free tier + $10/month Pro | Freemium for adoption + revenue |
 
 ## LATER Phase
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Collaboration Pricing** | $25/month (5 users) | $5/user, competitive pricing |
-| **Mobile App** | PWA (not native) | Single codebase, instant updates |
-| **Transcription** | OpenAI Whisper API | Best accuracy, fair pricing |
-| **Search Provider** | Self-hosted Typesense | Cost-effective, powerful features |
-| **API Monetization** | Free (rate limited) | Drive adoption, enable integrations |
+| Decision                  | Choice                | Rationale                           |
+| ------------------------- | --------------------- | ----------------------------------- |
+| **Collaboration Pricing** | $25/month (5 users)   | $5/user, competitive pricing        |
+| **Mobile App**            | PWA (not native)      | Single codebase, instant updates    |
+| **Transcription**         | OpenAI Whisper API    | Best accuracy, fair pricing         |
+| **Search Provider**       | Self-hosted Typesense | Cost-effective, powerful features   |
+| **API Monetization**      | Free (rate limited)   | Drive adoption, enable integrations |
 
 ---
 
 # COST PROJECTIONS
 
 ## NOW Phase (Local Development)
+
 **Monthly Cost**: $0
+
 - Database: Docker PostgreSQL (free)
 - Storage: Local filesystem (free)
 - Email: Resend free tier (100/day)
@@ -784,34 +981,36 @@ export async function GET(req: Request) {
 - OAuth: Free (Google, LinkedIn)
 
 ## NEXT Phase (50 Users, 250 Reports, 5K Documents)
+
 **Monthly Cost**: ~$50-80
 
-| Service | Cost |
-|---------|------|
-| Supabase (DB + Storage) | $25 |
-| Vercel Pro (hosting) | $20 |
-| Resend (emails) | $0 (free tier) |
-| LlamaParse | $10 (3,500 pages) |
-| Sentry | $0 (free tier) |
-| Domain | $1/month ($12/year) |
-| **Total** | **$56/month** |
+| Service                 | Cost                |
+| ----------------------- | ------------------- |
+| Supabase (DB + Storage) | $25                 |
+| Vercel Pro (hosting)    | $20                 |
+| Resend (emails)         | $0 (free tier)      |
+| LlamaParse              | $10 (3,500 pages)   |
+| Sentry                  | $0 (free tier)      |
+| Domain                  | $1/month ($12/year) |
+| **Total**               | **$56/month**       |
 
 **Revenue Target**: 5 paid users × $10 = $50/month (break-even)
 
 ## LATER Phase (500 Users, 2.5K Reports, 50K Documents)
+
 **Monthly Cost**: ~$250-350
 
-| Service | Cost |
-|---------|------|
-| Supabase (DB + Storage) | $99 (scaled) |
-| Vercel Pro | $20 |
-| Resend | $20 (emails) |
-| LlamaParse | $30 (10K pages) |
-| Sentry | $26 (errors) |
-| Whisper API | $180 (transcription) |
-| Typesense (self-hosted) | $10 (DigitalOcean) |
-| Domain | $1 |
-| **Total** | **$386/month** |
+| Service                 | Cost                 |
+| ----------------------- | -------------------- |
+| Supabase (DB + Storage) | $99 (scaled)         |
+| Vercel Pro              | $20                  |
+| Resend                  | $20 (emails)         |
+| LlamaParse              | $30 (10K pages)      |
+| Sentry                  | $26 (errors)         |
+| Whisper API             | $180 (transcription) |
+| Typesense (self-hosted) | $10 (DigitalOcean)   |
+| Domain                  | $1                   |
+| **Total**               | **$386/month**       |
 
 **Revenue Target**: 50 paid users × $10 = $500/month (profitable)
 

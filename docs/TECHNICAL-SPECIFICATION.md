@@ -20,9 +20,11 @@ This technical specification defines the complete architecture and implementatio
 This technical specification is organized across multiple focused documents:
 
 ### 📐 **1. Architecture & System Design**
+
 **File**: [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
 
 **What's Inside**:
+
 - System architecture diagram (5-layer clean architecture)
 - Layered architecture description
 - Data flow diagrams (upload, auth, search)
@@ -33,11 +35,14 @@ This technical specification is organized across multiple focused documents:
 ---
 
 ### 🗄️ **2. Database Schema**
+
 **Files**:
+
 - [`docs/DATABASE-SCHEMA.md`](./DATABASE-SCHEMA.md) (Complete specification)
 - [`docs/DATABASE-QUICKSTART.md`](./DATABASE-QUICKSTART.md) (Setup guide)
 
 **What's Inside**:
+
 - Entity-relationship diagram
 - Complete PostgreSQL DDL (6 tables)
 - Prisma schema (ORM configuration)
@@ -49,9 +54,11 @@ This technical specification is organized across multiple focused documents:
 ---
 
 ### 🔌 **3. API Design**
+
 **File**: [`docs/specs/API-DESIGN.md`](./specs/API-DESIGN.md)
 
 **What's Inside**:
+
 - Authentication flows (Google, LinkedIn, Magic Link)
 - 30+ RESTful API endpoints
 - Request/response examples for every endpoint
@@ -63,9 +70,11 @@ This technical specification is organized across multiple focused documents:
 ---
 
 ### 🧩 **4. Component Structure & File Organization**
+
 **File**: [`docs/technical-spec/component-structure.md`](./technical-spec/component-structure.md)
 
 **What's Inside**:
+
 - Complete file/folder structure
 - Component hierarchy diagram
 - Service layer design (business logic)
@@ -81,19 +90,19 @@ This technical specification is organized across multiple focused documents:
 
 ### Tech Stack (NOW Phase)
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Next.js 14 (App Router) | React framework |
-| **UI** | React 18, TypeScript | Component library |
-| **Styling** | Tailwind CSS | Utility-first CSS |
-| **Editor** | React SimpleMDE | Markdown editor |
-| **Database** | PostgreSQL 16 (Docker) | Relational database |
-| **ORM** | Prisma | Type-safe database client |
-| **Auth** | NextAuth | Authentication |
-| **Storage** | Local filesystem | File storage |
-| **Parsing** | LlamaParse API | Document text extraction |
-| **Analytics** | PostHog | Usage tracking |
-| **Email** | Resend | Magic link emails |
+| Layer         | Technology              | Purpose                   |
+| ------------- | ----------------------- | ------------------------- |
+| **Frontend**  | Next.js 14 (App Router) | React framework           |
+| **UI**        | React 18, TypeScript    | Component library         |
+| **Styling**   | Tailwind CSS            | Utility-first CSS         |
+| **Editor**    | React SimpleMDE         | Markdown editor           |
+| **Database**  | PostgreSQL 16 (Docker)  | Relational database       |
+| **ORM**       | Prisma                  | Type-safe database client |
+| **Auth**      | NextAuth                | Authentication            |
+| **Storage**   | Local filesystem        | File storage              |
+| **Parsing**   | LlamaParse API          | Document text extraction  |
+| **Analytics** | PostHog                 | Usage tracking            |
+| **Email**     | Resend                  | Magic link emails         |
 
 ---
 
@@ -123,31 +132,31 @@ This technical specification is organized across multiple focused documents:
 // Domain Layer - Business Entities
 
 interface User {
-  id: string;          // UUID
-  email: string;       // Unique
+  id: string; // UUID
+  email: string; // Unique
   name: string;
   createdAt: Date;
 }
 
 interface Report {
-  id: string;          // UUID
-  userId: string;      // FK → User
+  id: string; // UUID
+  userId: string; // FK → User
   name: string;
-  content: string;     // Markdown (NOW), Tiptap JSON (NEXT)
-  tags: string[];      // Report-level tags
+  content: string; // Markdown (NOW), Tiptap JSON (NEXT)
+  tags: string[]; // Report-level tags
   createdAt: Date;
   updatedAt: Date;
 }
 
 interface Document {
-  id: string;          // UUID
-  reportId: string;    // FK → Report
+  id: string; // UUID
+  reportId: string; // FK → Report
   filename: string;
-  fileHash: string;    // SHA-256 for duplicate detection
+  fileHash: string; // SHA-256 for duplicate detection
   storagePath: string; // Local path (NOW), Supabase URL (NEXT)
   parsedContent: string; // LlamaParse markdown output
-  notes: string;       // User notes about document
-  tags: string[];      // Document-level tags
+  notes: string; // User notes about document
+  tags: string[]; // Document-level tags
   createdAt: Date;
 }
 ```
@@ -162,7 +171,7 @@ interface Document {
 class ReportService {
   constructor(
     private reportRepo: IReportRepository,
-    private analytics: IAnalytics
+    private analytics: IAnalytics,
   ) {}
 
   async createReport(userId: string, name: string): Promise<Report> {
@@ -186,13 +195,10 @@ class DocumentService {
   constructor(
     private documentRepo: IDocumentRepository,
     private storageService: IStorageService,
-    private parserService: IParserService
+    private parserService: IParserService,
   ) {}
 
-  async uploadDocument(
-    reportId: string,
-    file: File
-  ): Promise<Document> {
+  async uploadDocument(reportId: string, file: File): Promise<Document> {
     // 1. Validate file
     this.validateFile(file);
 
@@ -247,7 +253,7 @@ class PostgresReportRepository implements IReportRepository {
   async findById(id: string): Promise<Report | null> {
     const row = await this.prisma.report.findUnique({
       where: { id },
-      include: { documents: true, tags: true }
+      include: { documents: true, tags: true },
     });
 
     return row ? this.toDomain(row) : null;
@@ -257,7 +263,7 @@ class PostgresReportRepository implements IReportRepository {
     await this.prisma.report.upsert({
       where: { id: report.id },
       create: this.toDatabase(report),
-      update: this.toDatabase(report)
+      update: this.toDatabase(report),
     });
   }
 
@@ -452,6 +458,7 @@ E2E Tests (Playwright)
 ## Migration Path (NOW → NEXT → LATER)
 
 ### NOW Phase (Current)
+
 - **Database**: PostgreSQL (Docker local)
 - **Storage**: Local filesystem
 - **Search**: PostgreSQL ILIKE (filename only)
@@ -459,6 +466,7 @@ E2E Tests (Playwright)
 - **Deployment**: Local development
 
 ### NEXT Phase (Cloud)
+
 - **Database**: Supabase PostgreSQL (connection string change only)
 - **Storage**: Supabase Storage (swap FileStorageService implementation)
 - **Search**: PostgreSQL full-text (tsvector columns, GIN indexes)
@@ -468,6 +476,7 @@ E2E Tests (Playwright)
 **Code Changes**: Minimal (swap infrastructure implementations, UI unchanged)
 
 ### LATER Phase (Collaboration)
+
 - **Real-Time**: Yjs + WebSocket server
 - **Search**: Typesense (advanced search with fuzzy matching)
 - **Mobile**: PWA (responsive design)
@@ -493,12 +502,14 @@ E2E Tests (Playwright)
 ## Environment Variables
 
 See each specification document for complete lists:
+
 - Architecture: NextAuth, OAuth providers
 - Database: PostgreSQL connection string
 - API: LlamaParse, Resend, PostHog keys
 - Storage: Local path (NOW), Supabase (NEXT)
 
 **Example `.env.local`**:
+
 ```bash
 # Database
 DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
@@ -545,18 +556,21 @@ STORAGE_PATH=./storage
 ## Performance Optimization
 
 ### Database
+
 - Indexes on all foreign keys
 - Composite indexes (user_id + created_at)
 - Partial indexes (WHERE deleted_at IS NULL)
 - Connection pooling (Prisma default: 10 connections)
 
 ### Frontend
+
 - Code splitting (Next.js automatic)
 - Lazy loading (React.lazy for heavy components)
 - Debounced search (300ms)
 - Virtualized lists (react-window for 100+ items)
 
 ### File Handling
+
 - Async parsing (non-blocking uploads)
 - Streaming uploads (multipart)
 - SHA-256 hashing (Web Crypto API, parallelized)
@@ -565,16 +579,309 @@ STORAGE_PATH=./storage
 
 ## Testing & Quality Assurance
 
-### Test Coverage Goals
-- Unit tests: 80% coverage (services, repositories, entities)
-- Integration tests: All API endpoints
-- E2E tests: Critical user flows
+### Testing Methodology: Strict TDD
 
-### Code Quality
-- ESLint (strict TypeScript rules)
-- Prettier (code formatting)
-- Husky pre-commit hooks (lint + format)
-- TypeScript strict mode
+**Apex follows Test-Driven Development (TDD)** - All code written test-first using Red-Green-Refactor cycle.
+
+**Why TDD for Apex:**
+
+- Financial data platform requires high correctness
+- Tests drive clean architecture and design
+- 90%+ code coverage naturally achieved
+- Refactoring safety from day 1
+- Living documentation through tests
+
+**Reference**: See [`docs/TDD-GUIDE.md`](./TDD-GUIDE.md) for comprehensive TDD practices.
+
+---
+
+### Test Pyramid
+
+```
+           /\
+          /E2E\       ← Few (5-10 critical user flows)
+         /------\      - Full authentication → report → document flow
+        /  API   \     - Slow but high confidence
+       /----------\
+      / Component  \   ← Some (30-40 API endpoints)
+     /  Integration \   - Test all HTTP endpoints
+    /--------------\   - Auth, validation, error handling
+   /                \
+  /   Component      \ ← More (50-60 React components)
+ /     Tests          \ - User interactions
+/--------------------\  - Loading/error states
+                        - React Testing Library
+
+    Unit Tests          ← Many (100+ units)
+   --------------       - Domain entities
+  Foundation Layer      - Services (mocked repos)
+                        - Repositories (mocked Prisma)
+                        - Pure functions
+                        - Fast, isolated
+```
+
+**Principle**: More unit tests (fast), fewer integration tests (slower), minimal E2E tests (slowest).
+
+---
+
+### Testing Strategy by Layer
+
+| Layer               | Test Type          | Tools            | Coverage Target     | Approach                    |
+| ------------------- | ------------------ | ---------------- | ------------------- | --------------------------- |
+| **Domain Entities** | Unit               | Jest             | 100%                | Pure functions, no mocking  |
+| **Services**        | Unit               | Jest + Mocks     | 95%                 | Mock repositories           |
+| **Repositories**    | Unit + Integration | Jest + Prisma    | 90%                 | Mock Prisma + real DB tests |
+| **API Routes**      | Integration        | Jest + Supertest | 90%                 | Test HTTP endpoints         |
+| **React Hooks**     | Unit               | Jest + RTL       | 85%                 | Mock fetch, test state      |
+| **Components**      | Unit               | Jest + RTL       | 80%                 | User-centric testing        |
+| **Pages**           | Integration + E2E  | Playwright       | Critical paths only | Full user flows             |
+
+---
+
+### TDD Workflow (Red-Green-Refactor)
+
+**Every feature follows this cycle:**
+
+```typescript
+// 1. 🔴 RED - Write failing test
+describe('ReportService', () => {
+  it('should create report with valid name', async () => {
+    const report = await service.createReport('user-123', 'Q4 Report');
+    expect(report.name).toBe('Q4 Report');
+  });
+});
+// Run: npm test → ❌ Fails (method doesn't exist)
+
+// 2. 🟢 GREEN - Write minimal code to pass
+class ReportService {
+  async createReport(userId: string, name: string): Promise<Report> {
+    return ReportEntity.create({ userId, name });
+  }
+}
+// Run: npm test → ✅ Passes
+
+// 3. 🔵 REFACTOR - Clean up while keeping tests green
+class ReportService {
+  async createReport(userId: string, name: string): Promise<Report> {
+    const report = ReportEntity.create({ userId, name: name.trim() });
+    await this.reportRepository.save(report);
+    return report;
+  }
+}
+// Run: npm test → ✅ Still passes
+
+// 4. ✅ COMMIT - Test + implementation together
+```
+
+---
+
+### Test Organization
+
+```
+apex/
+├── domain/
+│   ├── entities/
+│   │   ├── Report.ts
+│   │   └── __tests__/
+│   │       └── Report.test.ts          # Unit tests (100% coverage)
+│
+├── services/
+│   ├── ReportService.ts
+│   └── __tests__/
+│       └── ReportService.test.ts       # Unit tests (mock repos)
+│
+├── repositories/
+│   ├── implementations/
+│   │   ├── PrismaReportRepository.ts
+│   │   └── __tests__/
+│   │       ├── PrismaReportRepository.test.ts           # Unit (mocked)
+│   │       └── PrismaReportRepository.integration.test.ts  # Real DB
+│
+├── app/
+│   └── api/
+│       └── reports/
+│           ├── route.ts
+│           └── __tests__/
+│               └── route.test.ts       # Integration tests
+│
+├── components/
+│   └── reports/
+│       ├── ReportList.tsx
+│       └── __tests__/
+│           └── ReportList.test.tsx     # Component tests (RTL)
+│
+└── __tests__/
+    ├── utils/
+    │   ├── mocks.ts                    # Common mocks
+    │   ├── factories.ts                # Test data factories
+    │   └── testHelpers.ts              # Test utilities
+    ├── setup.ts                        # Jest setup
+    └── e2e/
+        └── reportFlow.test.ts          # E2E tests (Playwright)
+```
+
+---
+
+### Test Coverage Goals
+
+| Metric                        | Target | Enforcement      |
+| ----------------------------- | ------ | ---------------- |
+| **Overall Line Coverage**     | 90%    | CI blocks < 90%  |
+| **Overall Branch Coverage**   | 85%    | CI blocks < 85%  |
+| **Overall Function Coverage** | 90%    | CI blocks < 90%  |
+| **Domain Entities**           | 100%   | CI blocks < 100% |
+| **Services**                  | 95%    | CI blocks < 95%  |
+| **Repositories**              | 90%    | CI blocks < 90%  |
+| **API Routes**                | 90%    | CI blocks < 90%  |
+| **Components**                | 80%    | CI blocks < 80%  |
+
+**Coverage Reports**:
+
+```bash
+npm test -- --coverage              # Generate coverage report
+open coverage/lcov-report/index.html  # View in browser
+```
+
+---
+
+### CI/CD Integration
+
+**Pre-commit Hook** (via Husky):
+
+```bash
+# .husky/pre-commit
+npm test -- --bail --findRelatedTests  # Run tests for changed files
+```
+
+**GitHub Actions** (on PR):
+
+```yaml
+- name: Run tests
+  run: npm test -- --coverage
+
+- name: Check coverage thresholds
+  run: npm test -- --coverage --coverageThreshold='{"global":{"lines":90}}'
+
+- name: Upload to Codecov
+  uses: codecov/codecov-action@v3
+```
+
+**Merge Requirements**:
+
+- ✅ All tests passing
+- ✅ Coverage targets met
+- ✅ No ESLint errors
+- ✅ Code formatted (Prettier)
+
+---
+
+### Testing Tools & Dependencies
+
+```json
+{
+  "devDependencies": {
+    // Core Testing
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+
+    // React Testing
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/jest-dom": "^6.6.2",
+    "@testing-library/user-event": "^14.5.1",
+
+    // API Testing
+    "supertest": "^6.3.3",
+    "node-mocks-http": "^1.13.0",
+
+    // Mocking
+    "jest-mock-extended": "^3.0.5",
+    "msw": "^2.0.0",
+
+    // E2E Testing
+    "@playwright/test": "^1.40.0"
+  }
+}
+```
+
+---
+
+### Code Quality Tools
+
+**ESLint** (strict TypeScript rules):
+
+```json
+{
+  "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "warn"
+  }
+}
+```
+
+**Prettier** (code formatting):
+
+```json
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "plugins": ["prettier-plugin-tailwindcss"]
+}
+```
+
+**TypeScript** (strict mode):
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true
+  }
+}
+```
+
+**Husky + lint-staged** (pre-commit hooks):
+
+```json
+{
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix", "jest --bail --findRelatedTests"],
+    "*.{ts,tsx,css,md,json}": "prettier --write"
+  }
+}
+```
+
+---
+
+### Quality Metrics
+
+**Test Metrics**:
+
+- Total tests: 100+
+- Unit test execution: < 30 seconds
+- Integration test execution: < 2 minutes
+- E2E test execution: < 5 minutes
+- Test flakiness: < 1%
+
+**Code Quality Metrics**:
+
+- TypeScript strict mode: ✅ Enabled
+- ESLint errors: 0
+- Code coverage: 90%+
+- Cyclomatic complexity: < 10 per function
+- File size: < 300 lines per file
+
+**Bug Metrics** (track after launch):
+
+- Production bugs: < 5% escape rate
+- Time to fix critical: < 1 hour
+- Time to fix major: < 1 day
+- Regression rate: < 2%
 
 ---
 
@@ -612,17 +919,17 @@ STORAGE_PATH=./storage
 
 ## Document Index
 
-| Document | Purpose | Location |
-|----------|---------|----------|
-| **Architecture** | System design, layers, data flow | [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) |
-| **Database Schema** | Tables, indexes, Prisma | [`docs/DATABASE-SCHEMA.md`](./DATABASE-SCHEMA.md) |
-| **Database Quickstart** | Setup guide | [`docs/DATABASE-QUICKSTART.md`](./DATABASE-QUICKSTART.md) |
-| **API Design** | Endpoints, auth, file upload | [`docs/specs/API-DESIGN.md`](./specs/API-DESIGN.md) |
+| Document                | Purpose                           | Location                                                                                |
+| ----------------------- | --------------------------------- | --------------------------------------------------------------------------------------- |
+| **Architecture**        | System design, layers, data flow  | [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)                                             |
+| **Database Schema**     | Tables, indexes, Prisma           | [`docs/DATABASE-SCHEMA.md`](./DATABASE-SCHEMA.md)                                       |
+| **Database Quickstart** | Setup guide                       | [`docs/DATABASE-QUICKSTART.md`](./DATABASE-QUICKSTART.md)                               |
+| **API Design**          | Endpoints, auth, file upload      | [`docs/specs/API-DESIGN.md`](./specs/API-DESIGN.md)                                     |
 | **Component Structure** | React components, hooks, services | [`docs/technical-spec/component-structure.md`](./technical-spec/component-structure.md) |
-| **PRD-NOW** | MVP requirements | [`docs/prd/PRD-NOW-Core-MVP.md`](./prd/PRD-NOW-Core-MVP.md) |
-| **PRD-NEXT** | Cloud enhancements | [`docs/prd/PRD-NEXT-Enhanced-Features.md`](./prd/PRD-NEXT-Enhanced-Features.md) |
-| **PRD-LATER** | Collaboration features | [`docs/prd/PRD-LATER-Advanced-Features.md`](./prd/PRD-LATER-Advanced-Features.md) |
-| **Technical Decisions** | Technology choices | [`docs/prd/TECHNICAL-DECISIONS.md`](./prd/TECHNICAL-DECISIONS.md) |
+| **PRD-NOW**             | MVP requirements                  | [`docs/prd/PRD-NOW-Core-MVP.md`](./prd/PRD-NOW-Core-MVP.md)                             |
+| **PRD-NEXT**            | Cloud enhancements                | [`docs/prd/PRD-NEXT-Enhanced-Features.md`](./prd/PRD-NEXT-Enhanced-Features.md)         |
+| **PRD-LATER**           | Collaboration features            | [`docs/prd/PRD-LATER-Advanced-Features.md`](./prd/PRD-LATER-Advanced-Features.md)       |
+| **Technical Decisions** | Technology choices                | [`docs/prd/TECHNICAL-DECISIONS.md`](./prd/TECHNICAL-DECISIONS.md)                       |
 
 ---
 

@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  provider  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reports  Report[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+// Sessions (NextAuth)
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Reports
+model Report {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  name      String
+  content   String    @default("") @db.Text
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents  Document[]
+  reportTags ReportTag[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("reports")
+}
+
+// Documents
+model Document {
+  id            String    @id @default(uuid()) @db.Uuid
+  reportId      String    @map("report_id") @db.Uuid
+  filename      String
+  fileHash      String    @map("file_hash")
+  storagePath   String    @map("storage_path")
+  parsedContent String?   @map("parsed_content") @db.Text
+  notes         String    @default("")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  report       Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  documentTags DocumentTag[]
+
+  @@unique([reportId, fileHash])
+  @@index([reportId])
+  @@map("documents")
+}
+
+// Report Tags
+model ReportTag {
+  id       String @id @default(uuid()) @db.Uuid
+  reportId String @map("report_id") @db.Uuid
+  tag      String
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, tag])
+  @@index([reportId])
+  @@map("report_tags")
+}
+
+// Document Tags
+model DocumentTag {
+  id         String @id @default(uuid()) @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+  tag        String
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, tag])
+  @@index([documentId])
+  @@map("document_tags")
+}
