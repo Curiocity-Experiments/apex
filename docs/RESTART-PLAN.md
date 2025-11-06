@@ -21,17 +21,20 @@ This plan implements a **simple, clean restart** of Apex development using:
 ### Why This Approach
 
 **✅ Simple**:
+
 - One git tag preserves all legacy code
 - No complex directory structures to maintain
 - Clean slate for new architecture
 
 **✅ Trunk-Based Development**:
+
 - Single developer = no feature branch complexity
 - Frequent commits keep work safe
 - Easy to track progress phase by phase
 - Main branch always deployable
 
 **✅ Reversible**:
+
 - Can reference legacy code anytime: `git show legacy-curiocity:<file>`
 - Can restore if needed: `git checkout legacy-curiocity`
 - Documentation preserved in repo
@@ -45,18 +48,21 @@ Before starting, verify these conditions:
 ### Required Conditions
 
 - [ ] **Git Status Clean**: No uncommitted changes
+
   ```bash
   git status
   # Should show: "nothing to commit, working tree clean"
   ```
 
 - [ ] **On Correct Branch**: Currently on branch ready to become main
+
   ```bash
   git branch --show-current
   # Should show: claude/rebuild-vs-refactor-decision-011CUqe8pbbHB8Y4TkPDBStL
   ```
 
 - [ ] **Remote Access**: Can push to remote repository
+
   ```bash
   git remote -v
   # Verify remote URL is correct
@@ -71,6 +77,7 @@ Before starting, verify these conditions:
 ### Optional But Recommended
 
 - [ ] **Local Backup**: External backup of entire repository
+
   ```bash
   # Create backup
   cd /home/user
@@ -78,6 +85,7 @@ Before starting, verify these conditions:
   ```
 
 - [ ] **Docker Running**: For PostgreSQL later
+
   ```bash
   docker --version
   # Verify Docker is installed and running
@@ -91,12 +99,12 @@ Before starting, verify these conditions:
 
 ### Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Lose legacy code | Low | High | Git tag preserves everything |
-| Break build midway | Medium | Low | Can restart from any phase |
-| Database issues | Low | Medium | Docker container is isolated |
-| Dependency conflicts | Low | Low | Fresh npm install |
+| Risk                 | Likelihood | Impact | Mitigation                   |
+| -------------------- | ---------- | ------ | ---------------------------- |
+| Lose legacy code     | Low        | High   | Git tag preserves everything |
+| Break build midway   | Medium     | Low    | Can restart from any phase   |
+| Database issues      | Low        | Medium | Docker container is isolated |
+| Dependency conflicts | Low        | Low    | Fresh npm install            |
 
 **Decision Point**: If ANY required condition fails, STOP and resolve before proceeding.
 
@@ -109,6 +117,7 @@ Before starting, verify these conditions:
 **Goal**: Preserve legacy Curiocity code for reference
 
 **Commands**:
+
 ```bash
 # 1. Ensure clean state
 git status
@@ -146,6 +155,7 @@ git push origin legacy-curiocity
 ```
 
 **Verification**:
+
 ```bash
 # Check tag exists locally
 git tag -l legacy-curiocity
@@ -219,6 +229,7 @@ git config --local init.defaultBranch main
 **Goal**: Remove all legacy code, keep documentation
 
 **Safety First**:
+
 ```bash
 # Before deletion, verify tag one more time
 git show legacy-curiocity:app/api/auth/\[...nextauth\]/route.ts
@@ -287,6 +298,7 @@ ls node_modules 2>/dev/null && echo "WARNING: node_modules still exists!" || ech
 ```
 
 **Verify Deletion**:
+
 ```bash
 # Check what's left
 ls -la
@@ -310,6 +322,7 @@ ls -la
 ```
 
 **Stage Deletion**:
+
 ```bash
 # Stage all deletions
 git add -A
@@ -411,6 +424,7 @@ git diff --cached --stat
 ```
 
 **Key Differences from Legacy**:
+
 - ✅ Clean dependencies (no AWS SDK, no DynamoDB)
 - ✅ Prisma instead of DynamoDB
 - ✅ Simplified auth (NextAuth only)
@@ -433,6 +447,7 @@ npm list @prisma/client next next-auth
 ```
 
 **Expected Output**:
+
 ```
 apex@0.1.0
 ├── @prisma/client@5.21.1
@@ -634,6 +649,7 @@ STORAGE_PATH="./storage"
 ```
 
 **Generate NEXTAUTH_SECRET**:
+
 ```bash
 # Generate secret and add to .env.local
 openssl rand -base64 32
@@ -693,7 +709,10 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error'],
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
@@ -790,6 +809,7 @@ git status
 ```
 
 **Expected Status**:
+
 ```
 On branch main
 Changes to be committed:
@@ -810,7 +830,7 @@ Changes to be committed:
 
 #### Step E2: Create Commit
 
-```bash
+````bash
 git commit -m "$(cat <<'EOF'
 Initialize Apex rebuild: Clean foundation with Next.js 14 + Prisma
 
@@ -864,9 +884,10 @@ Apex project following the new architecture documented in:
 npm run dev  # Should start server on http://localhost:3000
 npx prisma studio  # Should open database GUI
 docker ps | grep apex-db  # Should show running container
-```
+````
 
 ## Reference
+
 Legacy code: git show legacy-curiocity:<file>
 Documentation: docs/RESTART-PLAN.md
 Developer Guide: docs/DEVELOPER-GUIDE.md
@@ -874,7 +895,8 @@ Developer Guide: docs/DEVELOPER-GUIDE.md
 Co-authored-by: Claude Code <code@anthropic.com>
 EOF
 )"
-```
+
+````
 
 #### Step E3: Push to Remote
 
@@ -884,7 +906,7 @@ git push origin main
 
 # If main doesn't exist on remote yet:
 git push -u origin main
-```
+````
 
 #### Step E4: Verify Commit
 
@@ -903,78 +925,283 @@ git log origin/main --oneline -1
 
 ---
 
-### Phase F: Begin Phase 1 Development
+### Phase F: Begin Phase 1 Development (with TDD)
 
-**Goal**: Start implementing core infrastructure following Developer Guide
+**Goal**: Start implementing core infrastructure following strict Test-Driven Development
 
 #### Reference Documentation
 
-At this point, switch to following the Developer Guide step-by-step:
+**Primary References**:
 
-**Primary Reference**: `/home/user/apex/docs/DEVELOPER-GUIDE.md`
+- `/home/user/apex/docs/DEVELOPER-GUIDE.md` - Step-by-step implementation (test-first)
+- `/home/user/apex/docs/TDD-GUIDE.md` - TDD practices and patterns
 
 **Current Location**: Phase 1 (starting at Step 6)
 
-#### Phase 1 Overview (from Developer Guide)
+#### Phase 1 Overview (TDD Approach)
 
-**Steps to implement** (6-10):
+**IMPORTANT**: All code written test-first using Red-Green-Refactor cycle
+
+**Steps to implement**:
+
 1. ✓ Create project structure (already done in Phase D5)
-2. Create Prisma client singleton (already done in Phase D9)
-3. Create domain entities (Report, Document)
-4. Create repository interfaces
-5. Implement repositories (PrismaReportRepository, PrismaDocumentRepository)
+2. ✓ Create Prisma client singleton (already done in Phase D9)
+3. **NEW**: Setup Jest and testing infrastructure
+4. **Write Report entity tests** → Implement Report entity
+5. **Write Document entity tests** → Implement Document entity
+6. **Write repository interface tests** → Implement interfaces
+7. **Write PrismaReportRepository tests** → Implement repository
+8. **Write PrismaDocumentRepository tests** → Implement repository
 
-#### Quick Start Phase 1
+#### Quick Start Phase 1 (TDD)
 
 ```bash
-# Step 1: Create domain entities
-# Follow: docs/DEVELOPER-GUIDE.md - Step 8
+# Step 1: Setup testing infrastructure
+npm test -- --init  # Initialize Jest
 
-mkdir -p domain/entities
+# Create test utilities
+mkdir -p __tests__/utils
+# Create __tests__/utils/mocks.ts
+# Create __tests__/utils/factories.ts
+# (See TDD-GUIDE.md for setup)
 
+# Step 2: Write tests FIRST (RED phase)
+mkdir -p domain/entities/__tests__
+
+# Create domain/entities/__tests__/Report.test.ts
+cat > domain/entities/__tests__/Report.test.ts <<'EOF'
+import { ReportEntity } from '../Report';
+
+describe('ReportEntity', () => {
+  it('should create report with valid name', () => {
+    const report = ReportEntity.create({
+      userId: 'user-123',
+      name: 'Q4 Report'
+    });
+
+    expect(report.name).toBe('Q4 Report');
+    expect(report.userId).toBe('user-123');
+  });
+});
+EOF
+
+# Step 3: Run test (see RED)
+npm test -- Report.test.ts
+# ❌ Test fails (Report.ts doesn't exist)
+
+# Step 4: Implement minimal code (GREEN phase)
 # Create domain/entities/Report.ts
-# Create domain/entities/Document.ts
-# (See Developer Guide for full code)
+# Write minimal code to make test pass
 
-# Step 2: Create repository interfaces
-# Follow: docs/DEVELOPER-GUIDE.md - Step 9
+# Step 5: Run test (see GREEN)
+npm test -- Report.test.ts
+# ✅ Test passes
 
-mkdir -p repositories/interfaces
+# Step 6: Refactor (keep tests green)
+# Improve code quality while tests still pass
 
-# Create repositories/interfaces/IReportRepository.ts
-# Create repositories/interfaces/IDocumentRepository.ts
-# (See Developer Guide for full code)
+# Step 7: Commit test + implementation together
+git add domain/entities/Report.ts domain/entities/__tests__/Report.test.ts
+git commit -m "feat: Add Report entity with validation (TDD)
 
-# Step 3: Implement repositories
-# Follow: docs/DEVELOPER-GUIDE.md - Step 10
+- Create Report entity with create() method
+- Validate name (non-empty, max 200 chars)
+- Auto-generate ID and timestamps
+- 100% test coverage"
 
-mkdir -p repositories/implementations
-
-# Create repositories/implementations/PrismaReportRepository.ts
-# Create repositories/implementations/PrismaDocumentRepository.ts
-# (See Developer Guide for full code)
-
-# Step 4: Commit after each major component
-git add domain/entities/Report.ts
-git commit -m "Add Report domain entity with validation"
-
-git add domain/entities/Document.ts
-git commit -m "Add Document domain entity with validation"
-
-# Continue following Developer Guide...
+# Repeat cycle for Document entity...
 ```
 
-#### Development Workflow
+#### TDD Development Workflow
+
+**For EVERY feature, follow Red-Green-Refactor:**
+
+```
+┌─────────────────────────────────────┐
+│ 1. 🔴 RED - Write Failing Test     │
+│    - Describe desired behavior      │
+│    - Run test, watch it fail        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ 2. 🟢 GREEN - Make Test Pass        │
+│    - Write minimal code             │
+│    - Run test, watch it pass        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ 3. 🔵 REFACTOR - Clean Up           │
+│    - Improve code quality           │
+│    - Tests still pass               │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ 4. ✅ COMMIT - Test + Code Together │
+│    - Atomic commit                  │
+│    - Descriptive message            │
+└─────────────────────────────────────┘
+```
+
+#### Development Steps (with TDD)
 
 For each step in Developer Guide:
 
-1. **Read the step** in docs/DEVELOPER-GUIDE.md
-2. **Implement the code** exactly as specified
-3. **Test locally** (npm run dev, type checking)
-4. **Commit** with descriptive message
-5. **Push frequently** (at least once per day)
+1. **🔴 RED**: Write failing test
 
-**Checkpoint**: ✅ Phase 1 started, following Developer Guide
+   ```bash
+   # Create test file first
+   touch domain/entities/__tests__/Report.test.ts
+   # Write test that describes behavior
+   ```
+
+2. **▶️ RUN**: Execute test (should fail)
+
+   ```bash
+   npm test -- Report.test.ts
+   # Expected: ❌ Test fails
+   ```
+
+3. **🟢 GREEN**: Implement minimal code
+
+   ```bash
+   # Create implementation file
+   touch domain/entities/Report.ts
+   # Write code to pass test
+   ```
+
+4. **▶️ RUN**: Execute test again (should pass)
+
+   ```bash
+   npm test -- Report.test.ts
+   # Expected: ✅ Test passes
+   ```
+
+5. **🔵 REFACTOR**: Improve code
+
+   ```bash
+   # Clean up, extract functions, improve names
+   # Run tests continuously to ensure no regression
+   ```
+
+6. **✅ COMMIT**: Test + implementation together
+
+   ```bash
+   git add domain/entities/Report.ts domain/entities/__tests__/Report.test.ts
+   git commit -m "feat: Add Report entity (TDD)"
+   ```
+
+7. **🚀 PUSH**: Push frequently
+   ```bash
+   git push origin claude/apex-restart-execution-...
+   ```
+
+#### Example: Adding Report Entity (TDD)
+
+```bash
+# 1. RED - Write test first
+cat > domain/entities/__tests__/Report.test.ts <<'EOF'
+import { ReportEntity } from '../Report';
+
+describe('ReportEntity', () => {
+  describe('create', () => {
+    it('should create report with valid name', () => {
+      const report = ReportEntity.create({
+        userId: 'user-123',
+        name: 'Q4 Report'
+      });
+
+      expect(report.name).toBe('Q4 Report');
+      expect(report.userId).toBe('user-123');
+      expect(report.id).toBeDefined();
+    });
+
+    it('should throw error for empty name', () => {
+      expect(() => {
+        ReportEntity.create({ userId: 'user-123', name: '' });
+      }).toThrow('Report name cannot be empty');
+    });
+  });
+});
+EOF
+
+# 2. RUN - See it fail
+npm test -- Report.test.ts
+# ❌ Module not found: ../Report
+
+# 3. GREEN - Implement
+cat > domain/entities/Report.ts <<'EOF'
+import { z } from 'zod';
+
+export const ReportSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  name: z.string().min(1),
+  content: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  deletedAt: z.date().nullable(),
+});
+
+export type Report = z.infer<typeof ReportSchema>;
+
+export class ReportEntity {
+  static create(params: { userId: string; name: string }): Report {
+    if (!params.name.trim()) {
+      throw new Error('Report name cannot be empty');
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      userId: params.userId,
+      name: params.name.trim(),
+      content: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    };
+  }
+}
+EOF
+
+# 4. RUN - See it pass
+npm test -- Report.test.ts
+# ✅ Tests passed
+
+# 5. REFACTOR - (optional, in this case code is clean)
+
+# 6. COMMIT
+git add domain/entities/Report.ts domain/entities/__tests__/Report.test.ts
+git commit -m "feat: Add Report entity with validation (TDD)
+
+- Create Report entity with create() method
+- Validate name (non-empty, trimmed)
+- Auto-generate UUID and timestamps
+- 100% test coverage (2/2 tests passing)"
+```
+
+#### Key TDD Principles
+
+**🚫 NEVER write production code without a failing test**
+**✅ ALWAYS commit test + implementation together**
+**🔄 ALWAYS follow Red-Green-Refactor cycle**
+**📊 ALWAYS verify 90%+ coverage**
+
+#### Coverage Verification
+
+```bash
+# Check coverage after each feature
+npm test -- --coverage
+
+# Should see high coverage:
+# Domain entities: 100%
+# Services: 95%
+# Overall: 90%+
+```
+
+**Checkpoint**: ✅ Phase 1 started with strict TDD, following Red-Green-Refactor
 
 ---
 
@@ -983,16 +1210,19 @@ For each step in Developer Guide:
 ### Core Principles
 
 **1. All Work on Main**
+
 - No long-lived feature branches
 - Small, atomic commits directly to main
 - Main is always in working state
 
 **2. Commit Frequency**
+
 - Commit after completing each component
 - Minimum: Daily commits
 - Ideal: Multiple commits per day
 
 **3. Commit Size**
+
 - Small, focused changes
 - Each commit should:
   - Add one feature/component
@@ -1000,6 +1230,7 @@ For each step in Developer Guide:
   - Have descriptive message
 
 **4. Integration Points**
+
 - After each Phase (0, 1, 2, etc.) → Merge to main (already on main!)
 - After each major feature → Commit to main
 - No "merge hell" because there are no branches
@@ -1007,6 +1238,7 @@ For each step in Developer Guide:
 ### Commit Message Conventions
 
 **Format**:
+
 ```
 <type>: <short description>
 
@@ -1017,6 +1249,7 @@ For each step in Developer Guide:
 ```
 
 **Types**:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `refactor`: Code refactoring
@@ -1069,6 +1302,7 @@ Reference: docs/DEVELOPER-GUIDE.md#phase-2"
 Only create branches for:
 
 1. **Experimental work** - Testing a risky approach
+
    ```bash
    git checkout -b experiment/new-parser-library
    # Try implementation
@@ -1084,6 +1318,7 @@ Only create branches for:
    ```
 
 **Rules for Feature Branches**:
+
 - Must live < 1 day
 - Merge or delete immediately
 - Never accumulate branches
@@ -1093,22 +1328,23 @@ Only create branches for:
 
 **After Each Phase** (from Developer Guide):
 
-| Phase | Estimated Time | Merge Point |
-|-------|---------------|-------------|
-| Phase 0 | 2 hours | ✓ Already merged |
-| Phase 1 | 6 hours | After core infrastructure complete |
-| Phase 2 | 8 hours | After business logic complete |
-| Phase 3 | 8 hours | After API routes complete |
-| Phase 4 | 12 hours | After frontend components complete |
-| Phase 5 | 6 hours | After pages complete |
-| Phase 6 | 8 hours | After testing complete |
-| Phase 7 | 4 hours | After polish complete |
+| Phase   | Estimated Time | Merge Point                        |
+| ------- | -------------- | ---------------------------------- |
+| Phase 0 | 2 hours        | ✓ Already merged                   |
+| Phase 1 | 6 hours        | After core infrastructure complete |
+| Phase 2 | 8 hours        | After business logic complete      |
+| Phase 3 | 8 hours        | After API routes complete          |
+| Phase 4 | 12 hours       | After frontend components complete |
+| Phase 5 | 6 hours        | After pages complete               |
+| Phase 6 | 8 hours        | After testing complete             |
+| Phase 7 | 4 hours        | After polish complete              |
 
 **Merge = Commit to Main** (since already on main)
 
 ### Handling Work In Progress
 
 **Option 1: WIP Commits** (Recommended)
+
 ```bash
 git commit -m "WIP: Partially implement DocumentService
 
@@ -1123,6 +1359,7 @@ git push origin main
 ```
 
 **Option 2: Git Stash**
+
 ```bash
 # Save work temporarily
 git stash save "DocumentService partial implementation"
@@ -1135,6 +1372,7 @@ git stash pop
 ```
 
 **Option 3: Draft PR** (For Later Team Context)
+
 ```bash
 # Create branch only for PR context
 git checkout -b feature/document-upload
@@ -1151,11 +1389,13 @@ git push origin feature/document-upload
 ### Viewing Legacy Code
 
 **View entire file**:
+
 ```bash
 git show legacy-curiocity:path/to/file.ts
 ```
 
 **Examples**:
+
 ```bash
 # View NextAuth configuration
 git show legacy-curiocity:app/api/auth/\[...nextauth\]/route.ts
@@ -1171,21 +1411,25 @@ git show legacy-curiocity:components/ui/button.tsx
 ```
 
 **Copy file from tag**:
+
 ```bash
 git show legacy-curiocity:lib/utils.ts > lib/utils.ts
 ```
 
 **List all files at tag**:
+
 ```bash
 git ls-tree -r legacy-curiocity --name-only
 ```
 
 **Search for file by name**:
+
 ```bash
 git ls-tree -r legacy-curiocity --name-only | grep "ReportCard"
 ```
 
 **View specific directory**:
+
 ```bash
 git ls-tree -r legacy-curiocity --name-only | grep "^components/ui/"
 ```
@@ -1193,16 +1437,19 @@ git ls-tree -r legacy-curiocity --name-only | grep "^components/ui/"
 ### Comparing Changes
 
 **Compare file between tag and current**:
+
 ```bash
 git diff legacy-curiocity:app/layout.tsx app/layout.tsx
 ```
 
 **See what changed in a directory**:
+
 ```bash
 git diff legacy-curiocity main -- app/
 ```
 
 **Statistics of changes**:
+
 ```bash
 git diff --stat legacy-curiocity main
 ```
@@ -1210,6 +1457,7 @@ git diff --stat legacy-curiocity main
 ### Checking Out Legacy Files Temporarily
 
 **Checkout single file to view (doesn't modify working tree)**:
+
 ```bash
 # View in temporary location
 git show legacy-curiocity:app/api/db/route.ts > /tmp/legacy-db-route.ts
@@ -1217,6 +1465,7 @@ cat /tmp/legacy-db-route.ts
 ```
 
 **Create temporary branch of legacy code**:
+
 ```bash
 # Create branch at tag (for exploration only)
 git checkout -b temp-legacy-view legacy-curiocity
@@ -1233,21 +1482,25 @@ git branch -D temp-legacy-view
 ### Advanced Tag Operations
 
 **View tag metadata**:
+
 ```bash
 git show legacy-curiocity
 ```
 
 **List all tags**:
+
 ```bash
 git tag -l
 ```
 
 **View commits since tag**:
+
 ```bash
 git log legacy-curiocity..HEAD --oneline
 ```
 
 **Create additional tags for milestones**:
+
 ```bash
 # Tag Phase 1 completion
 git tag -a phase-1-complete -m "Phase 1: Core Infrastructure Complete"
@@ -1265,6 +1518,7 @@ git push origin phase-2-complete
 ### Scenario 1: Need to Restore Legacy Code
 
 **Full restore**:
+
 ```bash
 # 1. Create backup of current work
 git checkout -b backup-apex-attempt-1
@@ -1282,6 +1536,7 @@ git log -1
 ```
 
 **Partial restore (specific file)**:
+
 ```bash
 # Restore single file from legacy
 git checkout legacy-curiocity -- app/api/auth/\[...nextauth\]/route.ts
@@ -1294,6 +1549,7 @@ git commit -m "Restore legacy NextAuth config from tag"
 ### Scenario 2: Restart Phase
 
 **If Phase 1 went wrong**:
+
 ```bash
 # 1. Find commit before Phase 1
 git log --oneline | grep "Phase 0"
@@ -1309,6 +1565,7 @@ git reset --hard abc1234
 ### Scenario 3: Database Corruption
 
 **Reset database**:
+
 ```bash
 # 1. Stop server
 # Ctrl+C in terminal running npm run dev
@@ -1329,6 +1586,7 @@ npm run dev
 ### Scenario 4: Dependency Issues
 
 **Clean reinstall**:
+
 ```bash
 # 1. Remove node_modules and lock file
 rm -rf node_modules package-lock.json
@@ -1348,12 +1606,14 @@ npm list --depth=0
 **Before risky operations**:
 
 1. **Create safety branch**:
+
    ```bash
    git checkout -b safety-checkpoint
    git checkout main
    ```
 
 2. **Create local backup**:
+
    ```bash
    cd /home/user
    cp -r apex apex-backup-$(date +%Y%m%d-%H%M%S)
@@ -1366,6 +1626,7 @@ npm list --depth=0
    ```
 
 **Recovery from backups**:
+
 ```bash
 # If all else fails
 cd /home/user
@@ -1402,6 +1663,7 @@ Follow Developer Guide sequentially:
 ### Phase 2: Business Logic (8 hours)
 
 **Steps 11-13** from Developer Guide:
+
 - Service layer (ReportService, DocumentService)
 - File storage service
 - Parser service (LlamaParse integration)
@@ -1459,15 +1721,15 @@ git push origin main  # Push daily
 
 **Weekly Milestones**:
 
-| Day | Goal | Checkpoint |
-|-----|------|-----------|
-| Day 1 | Phase 0 + Phase 1 | ✓ Core infrastructure |
-| Day 2 | Phase 2 | ✓ Business logic |
-| Day 3 | Phase 3 | ✓ API routes |
-| Day 4 | Phase 4 (Part 1) | ✓ React hooks + Report components |
-| Day 5 | Phase 4 (Part 2) | ✓ Document components |
-| Day 6 | Phase 5 | ✓ Pages and routing |
-| Day 7 | Phase 6 + Phase 7 | ✓ Testing + Polish |
+| Day   | Goal              | Checkpoint                        |
+| ----- | ----------------- | --------------------------------- |
+| Day 1 | Phase 0 + Phase 1 | ✓ Core infrastructure             |
+| Day 2 | Phase 2           | ✓ Business logic                  |
+| Day 3 | Phase 3           | ✓ API routes                      |
+| Day 4 | Phase 4 (Part 1)  | ✓ React hooks + Report components |
+| Day 5 | Phase 4 (Part 2)  | ✓ Document components             |
+| Day 6 | Phase 5           | ✓ Pages and routing               |
+| Day 7 | Phase 6 + Phase 7 | ✓ Testing + Polish                |
 
 **Total**: 7 days to complete NOW phase MVP
 
@@ -1478,6 +1740,7 @@ git push origin main  # Push daily
 Before executing this plan, verify:
 
 ### Pre-Execution
+
 - [ ] Git status clean
 - [ ] On correct branch
 - [ ] Remote access working
@@ -1485,20 +1748,24 @@ Before executing this plan, verify:
 - [ ] Local backup created
 
 ### Phase A: Tag
+
 - [ ] Tag `legacy-curiocity` created
 - [ ] Tag pushed to remote
 - [ ] Tag verified with `git show`
 
 ### Phase B: Main Branch
+
 - [ ] On `main` branch
 - [ ] All work committed
 
 ### Phase C: Clean
+
 - [ ] Legacy code deleted
 - [ ] Documentation preserved
 - [ ] Deletions staged
 
 ### Phase D: Initialize
+
 - [ ] `package.json` created
 - [ ] Dependencies installed
 - [ ] Prisma configured
@@ -1508,11 +1775,13 @@ Before executing this plan, verify:
 - [ ] Dev server runs
 
 ### Phase E: Commit
+
 - [ ] Changes committed to main
 - [ ] Pushed to remote
 - [ ] Commit verified
 
 ### Phase F: Phase 1
+
 - [ ] Following Developer Guide
 - [ ] Step 8 started (Domain entities)
 
@@ -1556,6 +1825,7 @@ git checkout legacy-curiocity
 **Last Updated**: 2025-11-06
 **Maintained By**: Development Team
 **Related Docs**:
+
 - `docs/DEVELOPER-GUIDE.md` - Step-by-step implementation
 - `docs/TECHNICAL-SPECIFICATION.md` - Architecture details
 - `docs/DATABASE-SCHEMA.md` - Database design
@@ -1565,4 +1835,4 @@ git checkout legacy-curiocity
 
 ---
 
-*Execute this plan sequentially. Do not skip phases. Commit frequently. Reference documentation continuously.*
+_Execute this plan sequentially. Do not skip phases. Commit frequently. Reference documentation continuously._
