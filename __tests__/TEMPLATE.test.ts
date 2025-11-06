@@ -14,7 +14,7 @@
 import { FeatureUnderTest } from '@/path/to/feature';
 import { mockDependency } from '@/__tests__/utils/mocks';
 
-describe('FeatureUnderTest', () => {
+describe.skip('FeatureUnderTest', () => {
   // Setup
   beforeEach(() => {
     // Reset mocks
