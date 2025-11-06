@@ -1,4 +1,4 @@
-# ResearchHub Technical Decisions
+# Apex Technical Decisions
 
 **Date**: 2025-11-06
 **Status**: Decision Document
@@ -14,7 +14,7 @@ Each decision evaluated on:
 - 🎯 **User Experience**: Impact on end-user
 - 📈 **Scalability**: Future growth support
 - 🔧 **Maintenance**: Long-term operational burden
-- 🏗️ **Migration Path**: Ease of upgrading later
+- 🏗️ **Upgrade Path**: Ease of enhancing later
 
 **Priority**: NOW phase prioritizes speed and simplicity, NEXT/LATER prioritize scale and UX.
 
@@ -27,33 +27,33 @@ Each decision evaluated on:
 ### ✅ **DECISION: PostgreSQL (Docker Container)**
 
 **Reasoning**:
-- **Parity with Production**: NEXT phase uses PostgreSQL → no migration issues
+- **Parity with Production**: NEXT phase uses PostgreSQL → seamless transition
 - **Full-Text Search**: Built-in FTS capabilities (needed for NEXT)
 - **JSON Support**: Better JSONB handling (for future rich text storage)
 - **Developer Experience**: Same SQL dialect as production
 - **Docker Setup**: Simple one-liner: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16`
 
 **Rejected: SQLite**
-- ❌ Migration required for NEXT phase (SQLite → PostgreSQL)
+- ❌ Transition required for NEXT phase (SQLite → PostgreSQL)
 - ❌ Limited full-text search (FTS5 extension different from PostgreSQL)
 - ❌ No JSONB type (would need TEXT + manual parsing)
 - ✅ Pros: Zero setup, single file
-- **Verdict**: Not worth migration headache later
+- **Verdict**: Not worth transition complexity later
 
 **Setup Command**:
 ```bash
 docker run -d \
-  --name researchhub-db \
+  --name apex-db \
   -p 5432:5432 \
   -e POSTGRES_PASSWORD=devpassword \
-  -e POSTGRES_DB=researchhub_dev \
+  -e POSTGRES_DB=apex_dev \
   -v pgdata:/var/lib/postgresql/data \
   postgres:16-alpine
 ```
 
 **Connection String**:
 ```
-postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+postgresql://postgres:devpassword@localhost:5432/apex_dev
 ```
 
 ---
@@ -66,7 +66,7 @@ postgresql://postgres:devpassword@localhost:5432/researchhub_dev
 - **Simplicity**: Drop-in component, minimal configuration
 - **Bundle Size**: ~50KB (lightweight)
 - **Features**: Preview, toolbar, keyboard shortcuts
-- **Migration Path**: Easy to swap for Tiptap in NEXT phase (content is plain markdown)
+- **Upgrade Path**: Easy to swap for Tiptap in NEXT phase (content is plain markdown)
 - **Developer Experience**: Clean API, well-documented
 
 **Alternatives Considered**:
@@ -156,9 +156,9 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 await resend.emails.send({
-  from: 'ResearchHub <noreply@researchhub.app>',
+  from: 'Apex <noreply@apex.app>',
   to: userEmail,
-  subject: 'Sign in to ResearchHub',
+  subject: 'Sign in to Apex',
   html: `<a href="${magicLink}">Click here to sign in</a>`,
 });
 ```
@@ -173,12 +173,12 @@ await resend.emails.send({
 - **Security**: Production and dev OAuth apps isolated
 - **Callback URLs**:
   - Dev: `http://localhost:3000/api/auth/callback/google`
-  - Prod: `https://researchhub.app/api/auth/callback/google`
+  - Prod: `https://apex.app/api/auth/callback/google`
 - **Best Practice**: Never mix dev and prod credentials
 
 **Google OAuth Setup (Dev)**:
 1. Go to Google Cloud Console
-2. Create project: "ResearchHub Dev"
+2. Create project: "Apex Dev"
 3. Enable Google+ API
 4. Create OAuth 2.0 credentials
 5. Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google`
@@ -186,7 +186,7 @@ await resend.emails.send({
 
 **LinkedIn OAuth Setup (Dev)**:
 1. Go to LinkedIn Developers
-2. Create app: "ResearchHub Dev"
+2. Create app: "Apex Dev"
 3. Redirect URLs: `http://localhost:3000/api/auth/callback/linkedin`
 4. Request scopes: `openid`, `profile`, `email`
 5. Copy Client ID and Secret → `.env.local`
@@ -242,7 +242,7 @@ console.log(`LlamaParse: Processed ${pageCount} pages (${totalToday}/1000 daily 
 - **Security**: SHA-256 cryptographically secure (MD5 has collisions)
 - **Duplicate Detection**: Need collision resistance for accurate deduplication
 - **Performance**: SHA-256 fast enough (< 100ms for 10MB file in Node.js)
-- **Future-Proof**: Industry standard, won't need to migrate later
+- **Future-Proof**: Industry standard, won't need to change later
 - **File Integrity**: Can verify file hasn't been corrupted
 
 **Rejected: MD5**
@@ -285,7 +285,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 - **Free Tier**: 500MB database, 1GB storage (enough for early users)
 - **Pricing**: $25/month for 8GB database, 100GB storage (scales with users)
 - **Developer Experience**: Excellent dashboard, real-time subscriptions, auto-generated APIs
-- **Migration Path**: Standard PostgreSQL → easy to migrate elsewhere if needed
+- **Portability**: Standard PostgreSQL → easy to move elsewhere if needed
 - **Storage Integration**: Native integration with Supabase Storage (simpler than R2)
 
 **Alternatives Considered**:
@@ -318,7 +318,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 **Setup**:
 1. Create project on supabase.com
 2. Copy connection string → `DATABASE_URL` env var
-3. Run Prisma migrations
+3. Run database schema setup
 4. Enable Supabase Storage
 5. Configure bucket for file uploads
 
@@ -354,7 +354,7 @@ const fileHash = await calculateFileHash('/path/to/file.pdf');
 | S3 | $4.60 | $0.90 | **$5.50** |
 
 **Winner for NOW/NEXT**: Supabase (simplicity > $2/month savings)
-**Migration Path**: Move to R2 in LATER if egress costs exceed $50/month
+**Upgrade Path**: Move to R2 in LATER if egress costs exceed $50/month
 
 **Setup**:
 ```typescript
@@ -509,12 +509,12 @@ export default function RootLayout({ children }) {
   - ❌ More maintenance (2 codebases)
 
 **PWA Features**:
-- Install prompt: "Add ResearchHub to home screen"
+- Install prompt: "Add Apex to home screen"
 - Offline mode: Cache last 5 viewed reports
 - Push notifications: "John commented on your report"
 - App-like experience: Full-screen, splash screen
 
-**Migration Path**: If PWA insufficient, consider React Native or Capacitor (wraps PWA)
+**Upgrade Path**: If PWA insufficient, consider React Native or Capacitor (wraps PWA)
 
 **Setup** (`next.config.js` + `next-pwa`):
 ```bash
@@ -536,8 +536,8 @@ module.exports = withPWA({
 **Manifest** (`public/manifest.json`):
 ```json
 {
-  "name": "ResearchHub",
-  "short_name": "ResearchHub",
+  "name": "Apex",
+  "short_name": "Apex",
   "description": "Research document management",
   "start_url": "/",
   "display": "standalone",
@@ -627,7 +627,7 @@ const transcription = await openai.audio.transcriptions.create({
   - Algolia: $1/1000 searches ($100/month for 100K searches)
   - Typesense Cloud: $0.03/hour = $22/month (cheaper)
   - Self-hosted: $10/month droplet (cheapest)
-- **Migration Path**: Start self-hosted, move to Typesense Cloud if scaling issues
+- **Upgrade Path**: Start self-hosted, move to Typesense Cloud if scaling issues
 
 **Rejected: Meilisearch**
 - ✅ Similar to Typesense
@@ -660,7 +660,7 @@ services:
 import Typesense from 'typesense';
 
 const client = new Typesense.Client({
-  nodes: [{ host: 'search.researchhub.app', port: '443', protocol: 'https' }],
+  nodes: [{ host: 'search.apex.app', port: '443', protocol: 'https' }],
   apiKey: process.env.TYPESENSE_API_KEY,
 });
 
@@ -745,7 +745,7 @@ export async function GET(req: Request) {
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Database** | PostgreSQL (Docker) | Production parity, no migration |
+| **Database** | PostgreSQL (Docker) | Production parity, seamless transition |
 | **Markdown Editor** | React SimpleMDE | Lightweight, simple API |
 | **Email Service** | Resend.com | Best DX, reliable, free tier |
 | **OAuth Setup** | Separate dev apps | Security best practice |
@@ -823,7 +823,7 @@ export async function GET(req: Request) {
 
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
@@ -860,7 +860,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 # NextAuth (production)
-NEXTAUTH_URL=https://researchhub.app
+NEXTAUTH_URL=https://apex.app
 NEXTAUTH_SECRET=production-secret-from-vercel
 
 # Google OAuth (production app)
@@ -890,7 +890,7 @@ NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 ```bash
 # Typesense
 TYPESENSE_API_KEY=xyz...
-TYPESENSE_HOST=search.researchhub.app
+TYPESENSE_HOST=search.apex.app
 
 # OpenAI (Whisper)
 OPENAI_API_KEY=sk-...

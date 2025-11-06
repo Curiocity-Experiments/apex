@@ -1,4 +1,4 @@
-# ResearchHub: Architecture & System Design
+# Apex: Architecture & System Design
 
 **Document Version:** 1.0
 **Date:** 2025-11-06
@@ -24,7 +24,7 @@
 
 ## Executive Summary
 
-ResearchHub is a research document management platform built for financial analysts. This document outlines the architecture for the **NOW phase** (Core MVP), which focuses on local development with a clean, maintainable codebase that addresses the architectural issues found in the legacy Curiocity application.
+Apex is a research document management platform built for financial analysts. This document outlines the architecture for the **NOW phase** (Core MVP), which focuses on local development with a clean, maintainable codebase.
 
 ### Key Architectural Goals
 
@@ -32,6 +32,7 @@ ResearchHub is a research document management platform built for financial analy
 2. **Testability**: Every layer can be tested in isolation
 3. **Maintainability**: Easy to understand, modify, and extend
 4. **Scalability**: Architecture supports future cloud migration (NEXT phase)
+5. **Flexibility**: Easily swap implementations without affecting business logic
 
 ### Tech Stack (NOW Phase)
 
@@ -49,47 +50,43 @@ ResearchHub is a research document management platform built for financial analy
 
 ### 1. Separation of Concerns
 
-**Problem in Legacy Code**: Business logic mixed in React Contexts (507-line God object), API routes containing types, utilities, and handlers.
-
-**Our Solution**: Clear boundaries between layers:
+Clear boundaries between layers ensure maintainability and testability:
 - **Presentation**: React components (UI only)
 - **Application**: Service classes (business logic)
 - **Domain**: Entities and business rules
 - **Infrastructure**: Database, file storage, external APIs
 
+Each layer has a distinct responsibility, making the codebase easy to navigate and modify.
+
 ### 2. Dependency Inversion Principle
 
-**Problem in Legacy Code**: Components directly call DynamoDB, no abstraction layer.
-
-**Our Solution**: Outer layers depend on interfaces defined in inner layers.
+Outer layers depend on interfaces defined in inner layers, enabling flexibility:
 
 ```typescript
-// BAD (Legacy):
-Component → fetch('/api/db') → DynamoDB
-
-// GOOD (ResearchHub):
-Component → Service → IRepository ← DynamoRepository
-                                  ← PostgresRepository (NOW)
+// Architecture Flow:
+Component → Service → IRepository ← PostgresRepository (NOW)
+                                  ← SupabaseRepository (NEXT)
 ```
+
+This pattern allows us to swap implementations (e.g., local PostgreSQL to Supabase) without changing business logic or UI code.
 
 ### 3. Single Responsibility Principle
 
-**Problem in Legacy Code**: `AppContext.tsx` contains state management + business logic + API calls.
-
-**Our Solution**: One responsibility per class/module:
+One responsibility per class/module:
 - **Context**: State management only
 - **Service**: Business logic only
 - **Repository**: Data access only
 - **API Route**: HTTP handling only
 
+This makes code easier to understand, test, and maintain.
+
 ### 4. DRY (Don't Repeat Yourself)
 
-**Problem in Legacy Code**: 44 duplicate `marshall/unmarshall` calls, 10+ duplicate DynamoDB client instantiations.
-
-**Our Solution**: Abstractions eliminate duplication:
+Abstractions eliminate duplication:
 - Repository pattern hides data access details
 - Service layer encapsulates business logic
 - API client abstracts HTTP calls
+- Shared utilities for common operations
 
 ---
 
@@ -1975,27 +1972,15 @@ export function DocumentList({ documents }: Props) {
 
 ## Summary
 
-### What We Fixed from Legacy Code
-
-| Legacy Issue | ResearchHub Solution |
-|--------------|----------------------|
-| God object (507-line Context) | Separate Context (state only) + Service layer (business logic) |
-| Business logic in UI | Service classes with single responsibility |
-| No repository pattern | `IRepository` interface with PostgreSQL implementation |
-| 44 duplicate DB calls | Repository encapsulates all data access |
-| 31 direct fetch calls | API client abstraction + Custom hooks |
-| No dependency injection | DI container + Constructor injection |
-| Type duplication | Single source of truth in `domain/entities/` |
-| Hard to test | Every layer testable in isolation |
-
----
-
 ### Architecture Benefits
 
 1. **Testability**: Mock any layer (repositories, services, external APIs)
 2. **Maintainability**: Clear boundaries, single responsibility
 3. **Scalability**: Easy to swap implementations (PostgreSQL → Supabase in NEXT)
 4. **Developer Experience**: Easy to onboard, understand, and extend
+5. **Type Safety**: TypeScript throughout with Prisma-generated types
+6. **Separation of Concerns**: Each layer has a single, well-defined responsibility
+7. **Flexibility**: Interface-based design allows implementation changes without refactoring
 
 ---
 

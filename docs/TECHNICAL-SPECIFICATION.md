@@ -1,4 +1,4 @@
-# ResearchHub Technical Specification
+# Apex Technical Specification
 
 **Version**: 1.0
 **Date**: 2025-11-06
@@ -9,9 +9,9 @@
 
 ## Executive Summary
 
-This technical specification defines the complete architecture and implementation details for **ResearchHub** (rebuild of Curiocity), a research document management platform for financial analysts.
+This technical specification defines the complete architecture and implementation details for **Apex**, a research document management platform for financial analysts.
 
-**What Changed**: This is a ground-up rebuild following **clean architecture principles** to fix the legacy codebase's God objects, tight coupling, and missing abstraction layers.
+**Architecture Overview**: Apex follows **clean architecture principles** with clear separation of concerns, dependency inversion, and a layered approach that ensures maintainability, testability, and scalability.
 
 ---
 
@@ -28,8 +28,7 @@ This technical specification is organized across multiple focused documents:
 - Data flow diagrams (upload, auth, search)
 - Component architecture overview
 - Migration-ready design (NOW → NEXT → LATER)
-
-**Key Improvement**: Fixes legacy "507-line God Context" with proper service and repository layers.
+- Clear separation of concerns with dependency inversion
 
 ---
 
@@ -45,8 +44,7 @@ This technical specification is organized across multiple focused documents:
 - Indexes for performance
 - Sample data with seed scripts
 - Migration strategy (NOW → NEXT)
-
-**Key Improvement**: Fixes "44× duplicate DynamoDB calls" with repository pattern.
+- Repository pattern for clean data access abstraction
 
 ---
 
@@ -60,8 +58,7 @@ This technical specification is organized across multiple focused documents:
 - File upload flow (18 detailed steps)
 - Error handling with status codes
 - Complete code examples
-
-**Key Improvement**: Replaces "31 direct fetch calls" with structured API client.
+- Structured API client with type safety
 
 ---
 
@@ -76,8 +73,7 @@ This technical specification is organized across multiple focused documents:
 - State management strategy (React Query + Zustand)
 - Custom hooks pattern
 - Complete component examples
-
-**Key Improvement**: Separates UI from business logic (no more Context with CRUD operations).
+- Clear separation between presentation and business logic
 
 ---
 
@@ -320,7 +316,7 @@ function ReportList() {
 ## File Structure Overview
 
 ```
-researchhub/
+apex/
 ├── app/                           # Next.js App Router
 │   ├── (auth)/                    # Auth pages (login, signup)
 │   ├── (app)/                     # Main app (requires auth)
@@ -390,16 +386,16 @@ researchhub/
 ```bash
 # Clone repository
 git clone <repository-url>
-cd researchhub
+cd apex
 
 # Install dependencies
 npm install
 
 # Start PostgreSQL
-docker run -d --name researchhub-db \
+docker run -d --name apex-db \
   -p 5432:5432 \
   -e POSTGRES_PASSWORD=devpassword \
-  -e POSTGRES_DB=researchhub_dev \
+  -e POSTGRES_DB=apex_dev \
   postgres:16-alpine
 
 # Configure environment
@@ -481,19 +477,6 @@ E2E Tests (Playwright)
 
 ## Key Architectural Decisions
 
-### ✅ What We Fixed from Curiocity
-
-| Legacy Problem | ResearchHub Solution |
-|----------------|---------------------|
-| 507-line God Context | Service layer (single responsibility) |
-| Business logic in UI | Domain entities + services |
-| 44 duplicate DB calls | Repository pattern |
-| 31 direct fetch calls | API client + React Query |
-| No service layer | Service classes with DI |
-| No repository pattern | IRepository interface |
-| Hard to test | Every layer mockable |
-| Type duplication | Single source in domain/ |
-
 ### ✅ Clean Architecture Benefits
 
 1. **Separation of Concerns**: Each layer has one job
@@ -501,6 +484,9 @@ E2E Tests (Playwright)
 3. **Testability**: Mock any layer (repos, services, APIs)
 4. **Maintainability**: Changes isolated to single layer
 5. **Scalability**: Swap implementations (PostgreSQL → Supabase, local → cloud)
+6. **Type Safety**: TypeScript throughout with full type inference
+7. **Performance**: Optimistic updates, caching, and connection pooling built-in
+8. **Developer Experience**: Clear patterns and conventions for rapid development
 
 ---
 
@@ -515,7 +501,7 @@ See each specification document for complete lists:
 **Example `.env.local`**:
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000

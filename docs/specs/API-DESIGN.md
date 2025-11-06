@@ -1,4 +1,4 @@
-# ResearchHub API Design Specification
+# Apex API Design Specification
 
 **Version**: 1.0
 **Date**: 2025-11-06
@@ -27,7 +27,7 @@
 **Pattern**: RESTful API with JSON request/response
 **Base URL**:
 - NOW: `http://localhost:3000/api`
-- NEXT: `https://researchhub.app/api`
+- NEXT: `https://apex.app/api`
 
 ### 1.2 Design Principles
 
@@ -178,9 +178,9 @@ LINKEDIN_CLIENT_SECRET=abc123...
 4. **Email Send**: Send via Resend API
    ```typescript
    await resend.emails.send({
-     from: 'ResearchHub <noreply@researchhub.app>',
+     from: 'Apex <noreply@apex.app>',
      to: 'sarah@example.com',
-     subject: 'Sign in to ResearchHub',
+     subject: 'Sign in to Apex',
      html: magicLinkEmailTemplate({
        url: `http://localhost:3000/api/auth/magic-link/verify?token=${token}&email=${encodeURIComponent(email)}`
      })
@@ -1948,7 +1948,7 @@ model Document {
 
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000

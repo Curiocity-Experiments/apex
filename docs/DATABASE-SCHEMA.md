@@ -1,4 +1,4 @@
-# ResearchHub Database Schema
+# Apex Database Schema
 
 **Version**: 1.0
 **Date**: 2025-11-06
@@ -407,7 +407,7 @@ COMMENT ON COLUMN documents.search_vector IS 'Full-text search index (NEXT phase
 
 ```prisma
 // schema.prisma
-// Prisma ORM schema for ResearchHub
+// Prisma ORM schema for Apex
 
 generator client {
   provider = "prisma-client-js"
@@ -1006,15 +1006,15 @@ npx prisma db seed
 ```bash
 # 1. Start PostgreSQL Docker container
 docker run -d \
-  --name researchhub-db \
+  --name apex-db \
   -p 5432:5432 \
   -e POSTGRES_PASSWORD=devpassword \
-  -e POSTGRES_DB=researchhub_dev \
+  -e POSTGRES_DB=apex_dev \
   -v pgdata:/var/lib/postgresql/data \
   postgres:16-alpine
 
 # 2. Set DATABASE_URL in .env.local
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
 
 # 3. Initialize Prisma
 npx prisma init
@@ -1350,13 +1350,13 @@ async function getUserReports(userId: string) {
 **Manual Backup**:
 ```bash
 # Backup PostgreSQL database
-docker exec researchhub-db pg_dump -U postgres researchhub_dev > backup-$(date +%Y%m%d).sql
+docker exec apex-db pg_dump -U postgres apex_dev > backup-$(date +%Y%m%d).sql
 
 # Backup files
 tar -czf storage-backup-$(date +%Y%m%d).tar.gz ./storage/
 
 # Restore database
-docker exec -i researchhub-db psql -U postgres researchhub_dev < backup-20251106.sql
+docker exec -i apex-db psql -U postgres apex_dev < backup-20251106.sql
 ```
 
 ### Supabase (NEXT)

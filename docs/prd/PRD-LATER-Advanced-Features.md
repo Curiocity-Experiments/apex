@@ -1,4 +1,4 @@
-# Product Requirements Document: ResearchHub Advanced Features
+# Product Requirements Document: Apex Advanced Features
 
 **Phase**: LATER (Collaboration, Mobile, Advanced Features)
 **Status**: Draft v1.0
@@ -10,7 +10,7 @@
 ## 1. Executive Summary
 
 ### What We're Building
-Advanced features transforming ResearchHub from single-user tool to collaborative research platform with mobile support, team features, and enhanced productivity capabilities.
+Advanced features transforming Apex from single-user tool to collaborative research platform with mobile support, team features, and enhanced productivity capabilities.
 
 ### Why This Phase
 **NEXT Phase Learnings** (assumptions to validate):
@@ -159,7 +159,7 @@ Advanced features transforming ResearchHub from single-user tool to collaborativ
 **User Workflows**:
 
 **Workflow: Review Report on iPad**
-1. Sarah opens ResearchHub on iPad
+1. Sarah opens Apex on iPad
 2. Sees report list (card grid, 2 columns)
 3. Taps "Q4 Tech Analysis" report
 4. Report opens in single-panel view (editor fills screen)
@@ -198,7 +198,7 @@ Advanced features transforming ResearchHub from single-user tool to collaborativ
 **What**: Download reports as PDF, Word, or Markdown
 
 **Why**:
-- **User Request**: "I finish reports in ResearchHub, then need to send to clients as PDF"
+- **User Request**: "I finish reports in Apex, then need to send to clients as PDF"
 - **Workflow**: Research reports often shared externally (clients, stakeholders)
 - **Formats Needed**:
   - **PDF**: Final deliverable (clients, email attachments)
@@ -417,7 +417,7 @@ Advanced features transforming ResearchHub from single-user tool to collaborativ
 - Saved filters persist across sessions
 
 **Technical Requirements**:
-- **Search Engine**: Migrate from PostgreSQL to Typesense or Meilisearch (dedicated search engine)
+- **Search Engine**: Upgrade from PostgreSQL to Typesense or Meilisearch (dedicated search engine)
 - **Fuzzy Match**: Use Levenshtein distance algorithm
 - **Autocomplete**: Index common terms, use trie data structure
 - **Performance**: Search 10,000+ documents in < 500ms
@@ -554,7 +554,7 @@ Advanced features transforming ResearchHub from single-user tool to collaborativ
 
 **Why**:
 - **Power User Feature**: Analysts want to automate workflows (export all reports weekly)
-- **Integrations**: Connect ResearchHub to other tools (Zapier, n8n)
+- **Integrations**: Connect Apex to other tools (Zapier, n8n)
 - **Use Cases**:
   - Bulk export reports
   - Automated backups

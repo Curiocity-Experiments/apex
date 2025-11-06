@@ -1,4 +1,4 @@
-# Product Requirements Document: ResearchHub Enhanced Features
+# Product Requirements Document: Apex Enhanced Features
 
 **Phase**: NEXT (Cloud Deployment + Enhanced Features)
 **Status**: Draft v1.0
@@ -10,7 +10,7 @@
 ## 1. Executive Summary
 
 ### What We're Building
-Cloud-deployed version of ResearchHub with expanded file type support, full-text search, and rich text editing. This phase transforms the local MVP into a production-ready SaaS platform accessible from any browser.
+Cloud-deployed version of Apex with expanded file type support, full-text search, and rich text editing. This phase transforms the local MVP into a production-ready SaaS platform accessible from any browser.
 
 ### Why This Phase
 **NOW Phase Learnings** (assumptions to validate):
@@ -37,7 +37,7 @@ Cloud-deployed version of ResearchHub with expanded file type support, full-text
 ## 2. Changes from NOW Phase
 
 ### New Capabilities
-1. **Cloud Deployment**: Accessible via public URL (e.g., researchhub.app)
+1. **Cloud Deployment**: Accessible via public URL (e.g., apex.app)
 2. **Cloud File Storage**: Files stored in Cloudflare R2 or Supabase Storage
 3. **Cloud Database**: PostgreSQL (managed service like Supabase, Neon, or PlanetScale)
 4. **Expanded File Types**: PDF, Word, Excel, PowerPoint, CSV, HTML, PNG, JPG, GIF
@@ -74,7 +74,7 @@ Cloud-deployed version of ResearchHub with expanded file type support, full-text
 
 **Requirements**:
 - HTTPS only (SSL certificate)
-- Custom domain (e.g., researchhub.app)
+- Custom domain (e.g., apex.app)
 - Environment variable management (secrets)
 - Automatic deployments from main branch
 - Staging environment for testing
@@ -286,7 +286,7 @@ Cloud-deployed version of ResearchHub with expanded file type support, full-text
 **Content Storage**:
 - **Format**: JSON (Tiptap native format) or HTML
 - **Database**: Store as TEXT field in PostgreSQL
-- **Backward Compatibility**: Convert existing markdown reports to HTML on load (one-time migration)
+- **Markdown Support**: Can import existing markdown reports and convert to HTML on load
 
 **Acceptance Criteria**:
 - Editor loads in < 1 second (lightweight bundle)
@@ -582,34 +582,7 @@ LIMIT 20;
 
 ---
 
-## 6. Migration from NOW to NEXT
-
-### Data Migration
-
-**Step 1: Database Migration**
-- Export SQLite data (if using SQLite in NOW)
-- Transform schema to PostgreSQL format
-- Import into cloud PostgreSQL instance
-- Validate data integrity (row counts, foreign keys)
-
-**Step 2: File Migration**
-- Upload files from local filesystem to Cloudflare R2
-- Update database records with new storage URLs
-- Verify all files accessible via signed URLs
-
-**Step 3: Content Format Migration**
-- Convert existing markdown reports to Tiptap JSON format
-- Use markdown-to-html parser
-- Wrap in Tiptap document structure
-- Store in `reports.content` JSONB field
-
-**Rollback Plan**:
-- Keep local backups of SQLite + files for 30 days
-- Can restore to NOW version if NEXT deployment fails
-
----
-
-## 7. Success Criteria (NEXT Phase)
+## 6. Success Criteria (NEXT Phase)
 
 ### User Success Metrics
 
@@ -647,7 +620,7 @@ LIMIT 20;
 
 ---
 
-## 8. Out of Scope (NEXT)
+## 7. Out of Scope (NEXT)
 
 ### Features NOT in NEXT:
 - ❌ Mobile responsive design (desktop only, 1280px+ width)
@@ -663,7 +636,7 @@ LIMIT 20;
 
 ---
 
-## 9. Risks & Mitigation
+## 8. Risks & Mitigation
 
 ### Risk 1: Cloud Costs Higher Than Expected
 - **Impact**: Monthly costs exceed budget ($50/month assumed)
@@ -675,15 +648,11 @@ LIMIT 20;
 
 ### Risk 3: Search Performance Degrades
 - **Impact**: Full-text search slow (> 1 second) with 10,000+ documents
-- **Mitigation**: Monitor query performance, add database indexes, consider migrating to Typesense if needed
-
-### Risk 4: Migration Failures (NOW → NEXT)
-- **Impact**: Data loss or corruption during migration
-- **Mitigation**: Full backup before migration, test migration on staging environment, incremental rollout
+- **Mitigation**: Monitor query performance, add database indexes, consider upgrading to Typesense if needed
 
 ---
 
-## 10. Open Questions
+## 9. Open Questions
 
 1. **Cloud Database Provider**: Supabase (integrated storage) vs. Neon (faster) vs. PlanetScale (autoscaling)?
    - **Decision Needed By**: Before infrastructure setup

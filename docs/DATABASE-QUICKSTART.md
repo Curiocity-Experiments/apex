@@ -1,6 +1,6 @@
 # Database Quick Start Guide
 
-**For**: ResearchHub NOW Phase (Local Development)
+**For**: Apex NOW Phase (Local Development)
 **Database**: PostgreSQL 16 (Docker)
 **ORM**: Prisma
 
@@ -11,18 +11,18 @@
 ```bash
 # Start PostgreSQL container
 docker run -d \
-  --name researchhub-db \
+  --name apex-db \
   -p 5432:5432 \
   -e POSTGRES_PASSWORD=devpassword \
-  -e POSTGRES_DB=researchhub_dev \
+  -e POSTGRES_DB=apex_dev \
   -v pgdata:/var/lib/postgresql/data \
   postgres:16-alpine
 
 # Verify container is running
-docker ps | grep researchhub-db
+docker ps | grep apex-db
 
 # View logs
-docker logs researchhub-db
+docker logs apex-db
 ```
 
 ---
@@ -33,7 +33,7 @@ Create `.env.local` in project root:
 
 ```bash
 # Database connection
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
@@ -205,7 +205,7 @@ npx prisma db push
 
 ```bash
 # Connect to database using psql
-docker exec -it researchhub-db psql -U postgres -d researchhub_dev
+docker exec -it apex-db psql -U postgres -d apex_dev
 
 # Example queries:
 # List all tables
@@ -230,10 +230,10 @@ SELECT id, title, created_at FROM reports;
 
 ```bash
 # Backup database
-docker exec researchhub-db pg_dump -U postgres researchhub_dev > backup-$(date +%Y%m%d).sql
+docker exec apex-db pg_dump -U postgres apex_dev > backup-$(date +%Y%m%d).sql
 
 # Restore database
-docker exec -i researchhub-db psql -U postgres researchhub_dev < backup-20251106.sql
+docker exec -i apex-db psql -U postgres apex_dev < backup-20251106.sql
 
 # Backup files
 tar -czf storage-backup-$(date +%Y%m%d).tar.gz ./storage/
@@ -245,13 +245,13 @@ tar -czf storage-backup-$(date +%Y%m%d).tar.gz ./storage/
 
 ```bash
 # Stop container (data preserved)
-docker stop researchhub-db
+docker stop apex-db
 
 # Start container
-docker start researchhub-db
+docker start apex-db
 
 # Remove container (data preserved in volume)
-docker rm researchhub-db
+docker rm apex-db
 
 # Remove volume (DELETES ALL DATA!)
 docker volume rm pgdata
@@ -273,28 +273,28 @@ sudo systemctl stop postgresql  # Linux
 
 # Option 2: Use different port
 docker run -d \
-  --name researchhub-db \
+  --name apex-db \
   -p 5433:5432 \  # Use port 5433 instead
   ...
 
 # Update DATABASE_URL:
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5433/researchhub_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:5433/apex_dev
 ```
 
 ### Cannot Connect to Database
 
 ```bash
 # Check container is running
-docker ps | grep researchhub-db
+docker ps | grep apex-db
 
 # Check logs
-docker logs researchhub-db
+docker logs apex-db
 
 # Test connection
-docker exec -it researchhub-db psql -U postgres -c "SELECT version();"
+docker exec -it apex-db psql -U postgres -c "SELECT version();"
 
 # Restart container
-docker restart researchhub-db
+docker restart apex-db
 ```
 
 ### Prisma Client Out of Sync

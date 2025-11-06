@@ -16,7 +16,7 @@
 ### Complete Directory Tree
 
 ```
-researchhub/
+apex/
 ├── app/                                    # Next.js 14 App Router
 │   ├── (auth)/                             # Auth route group (public routes)
 │   │   ├── login/
@@ -1545,52 +1545,52 @@ export function ReportMetadataForm({
 }
 ```
 
-### Why NO Context for Business Logic?
+### Why Separate Business Logic from Context?
 
-**Old Anti-Pattern (Curiocity)**:
+**Context for State Only**:
 ```typescript
-// ❌ BAD: Business logic in Context
-const AppContext = createContext({
-  currentResource: null,
-  uploadFile: async (file) => {
-    // S3 upload logic here
-    // Database update logic here
-  },
-  fetchResources: async () => {
-    // API call logic here
-  },
+// ✅ Context manages state only
+const UIContext = createContext({
+  sidebarOpen: false,
+  toggleSidebar: () => {},
 });
 ```
 
-**Problems**:
-- Business logic tightly coupled to React
-- Hard to test (requires React testing library)
-- Can't reuse logic outside components
-- Difficult to maintain
-
-**New Clean Architecture**:
+**Services for Business Logic**:
 ```typescript
-// ✅ GOOD: Service handles business logic
+// ✅ Service handles business logic
 class DocumentService {
   async uploadDocument(file: File) {
-    // Business logic here
+    // Business logic here: validation, upload, parsing, etc.
   }
 }
+```
 
-// ✅ GOOD: Hook wraps service
+**Hooks Bridge UI and Services**:
+```typescript
+// ✅ Hook wraps service
 function useDocuments() {
   const mutation = useMutation({
     mutationFn: (file: File) => documentService.uploadDocument(file),
   });
   return mutation;
 }
+```
 
-// ✅ GOOD: Component just calls hook
+**Components Focus on UI**:
+```typescript
+// ✅ Component just calls hook
 function DocumentUpload() {
   const { mutate: upload } = useDocuments();
   return <button onClick={() => upload(file)}>Upload</button>;
 }
 ```
+
+**Benefits**:
+- Business logic testable without React
+- Services reusable in API routes, CLI tools, etc.
+- Components remain simple and focused on UI
+- Clear separation makes codebase maintainable
 
 ---
 
@@ -2239,18 +2239,24 @@ export function DocumentCard({ document, onClick, onDelete }: DocumentCardProps)
 - **Repositories**: Database access only
 - **State Management**: Right tool for right job (React Query, Zustand, React Hook Form)
 
-### Migration Path from Curiocity
+### Architecture Flow
 
-**Old (Curiocity)**:
-```
-Component → Context (with business logic) → API Route → Database
-```
-
-**New (ResearchHub)**:
 ```
 Component → Hook → Service → Repository → Database
        ↓
-   React Query (caching)
+   React Query (caching & synchronization)
 ```
 
-This architecture will make ResearchHub significantly more maintainable and scalable than Curiocity.
+**Data Flow Example**:
+1. User clicks "Upload Document" button
+2. Component calls `uploadDocument` from `useDocuments` hook
+3. Hook triggers mutation that calls `DocumentService.uploadDocument`
+4. Service validates file, calculates hash, checks for duplicates
+5. Service delegates storage to `FileStorageService`
+6. Service delegates parsing to `ParsingService`
+7. Service delegates database save to `DocumentRepository`
+8. Repository executes database query via Prisma
+9. Hook updates React Query cache with new document
+10. Component automatically re-renders with updated data
+
+This layered architecture ensures maintainability, testability, and scalability.

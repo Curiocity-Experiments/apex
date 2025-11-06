@@ -1,6 +1,6 @@
-# ResearchHub Product Requirements - Executive Summary
+# Apex Product Requirements - Executive Summary
 
-**Project**: ResearchHub (formerly Curiocity)
+**Project**: Apex
 **Date**: 2025-11-06
 **Status**: Requirements Complete, Ready for Technical Specification
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-ResearchHub is a research document management platform that helps financial analysts and knowledge workers organize reference materials while writing long-form reports. The platform solves the core problem of context-switching and time waste when searching for source documents during the writing process.
+Apex is a research document management platform that helps financial analysts and knowledge workers organize reference materials while writing long-form reports. The platform solves the core problem of context-switching and time waste when searching for source documents during the writing process.
 
 ---
 
@@ -56,7 +56,7 @@ ResearchHub is a research document management platform that helps financial anal
 - 50%+ weekly active users (WAU)
 - PDF uploads > 50% of total uploads
 
-**Deployment**: Production cloud (researchhub.app or similar)
+**Deployment**: Production cloud (apex.app or similar)
 
 ---
 
@@ -92,16 +92,6 @@ ResearchHub is a research document management platform that helps financial anal
 - **Problem**: Loses train of thought while searching for reference documents during report writing
 - **Current Workflow**: Switches between Word/Google Docs and Finder/Explorer 20-50 times per report
 - **Job to Be Done**: "When I'm writing a research report and need to reference a source document, I want to instantly access and search my reference materials without leaving my writing environment, so I can maintain flow and finish reports faster."
-
----
-
-## Key Terminology Changes
-
-| Old (Curiocity) | New (ResearchHub) | Definition |
-|-----------------|-------------------|------------|
-| Document | Report | The primary deliverable the user is writing (research report, analysis) |
-| Resource | Document | A reference file uploaded by the user (earnings report, PDF, etc.) |
-| Folder | Tags | Organization method (simplified from actual folders to tags) |
 
 ---
 
@@ -217,7 +207,7 @@ ResearchHub is a research document management platform that helps financial anal
 
 ### NEXT Phase
 - **Environment**: Cloud production (Vercel)
-- **Access**: Public URL (e.g., researchhub.app)
+- **Access**: Public URL (e.g., apex.app)
 - **Users**: 10-50 users
 - **Data**: Cloud PostgreSQL + Cloudflare R2
 
@@ -283,8 +273,8 @@ ResearchHub is a research document management platform that helps financial anal
 
 ### NEXT Phase Risks
 - **Cloud Costs**: Exceed budget → Mitigation: Monitor weekly, set quotas
-- **Migration**: Data loss during NOW → NEXT migration → Mitigation: Full backups, test migration
-- **Search Performance**: Slow with 10,000+ docs → Mitigation: Add indexes, consider Typesense migration
+- **Data Transition**: Data loss during NOW → NEXT upgrade → Mitigation: Full backups, test upgrade path
+- **Search Performance**: Slow with 10,000+ docs → Mitigation: Add indexes, consider Typesense enhancement
 
 ### LATER Phase Risks
 - **Real-Time Sync**: Data loss in collaborative editing → Mitigation: Auto-save fallback every 10 seconds

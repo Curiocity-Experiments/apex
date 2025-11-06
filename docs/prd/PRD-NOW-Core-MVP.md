@@ -1,4 +1,4 @@
-# Product Requirements Document: ResearchHub Core MVP
+# Product Requirements Document: Apex Core MVP
 
 **Phase**: NOW (Core MVP for Local Development)
 **Status**: Draft v1.0
@@ -398,7 +398,7 @@ Local filesystem storage for NOW phase enables fast development without cloud in
 **Scenario**: Sarah needs to reference her Q3 analysis for Q4 report
 
 **Steps**:
-1. Sarah clicks "ResearchHub" logo (top-left) → returns to report list
+1. Sarah clicks "Apex" logo (top-left) → returns to report list
 2. Sees 15 reports in grid view
 3. Remembers it was tagged "tech-sector"
 4. Clicks "tech-sector" tag filter
@@ -452,7 +452,7 @@ Local filesystem storage for NOW phase enables fast development without cloud in
 ### Database
 - **Type**: SQLite or PostgreSQL (local instance)
 - **Location**: Local database file or Docker container
-- **Migrations**: Schema migrations handled via migration tool (Prisma, Drizzle, etc.)
+- **Schema Management**: Database schema managed via tools like Prisma or Drizzle
 
 ### Authentication
 - **Providers**: Google OAuth, LinkedIn OAuth (developer credentials)

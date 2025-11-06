@@ -1,4 +1,4 @@
-# ResearchHub Developer Implementation Guide
+# Apex Developer Implementation Guide
 
 **Version**: 1.0
 **Date**: 2025-11-06
@@ -9,7 +9,7 @@
 
 ## Overview
 
-This guide provides step-by-step instructions to build **ResearchHub** from scratch following clean architecture principles. By the end, you'll have a working MVP running locally.
+This guide provides step-by-step instructions to build **Apex** from scratch following clean architecture principles. By the end, you'll have a working MVP running locally.
 
 ---
 
@@ -32,14 +32,14 @@ Before starting, ensure you have:
 
 ```bash
 # Create project with App Router
-npx create-next-app@14 researchhub \
+npx create-next-app@14 apex \
   --typescript \
   --tailwind \
   --app \
   --src-dir=false \
   --import-alias="@/*"
 
-cd researchhub
+cd apex
 ```
 
 **Checkpoint**: ✅ `npm run dev` should start server at localhost:3000
@@ -90,15 +90,15 @@ npm install -D @types/node
 ```bash
 # Start PostgreSQL container
 docker run -d \
-  --name researchhub-db \
+  --name apex-db \
   -p 5432:5432 \
   -e POSTGRES_PASSWORD=devpassword \
-  -e POSTGRES_DB=researchhub_dev \
-  -v researchhub-pgdata:/var/lib/postgresql/data \
+  -e POSTGRES_DB=apex_dev \
+  -v apex-pgdata:/var/lib/postgresql/data \
   postgres:16-alpine
 
 # Verify running
-docker ps | grep researchhub-db
+docker ps | grep apex-db
 ```
 
 **Checkpoint**: ✅ Container running on port 5432
@@ -111,7 +111,7 @@ Create `.env.local`:
 
 ```bash
 # Database
-DATABASE_URL="postgresql://postgres:devpassword@localhost:5432/researchhub_dev"
+DATABASE_URL="postgresql://postgres:devpassword@localhost:5432/apex_dev"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
@@ -1396,7 +1396,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full p-8 border rounded-lg">
-        <h1 className="text-3xl font-bold mb-6">Sign in to ResearchHub</h1>
+        <h1 className="text-3xl font-bold mb-6">Sign in to Apex</h1>
 
         <div className="space-y-4">
           <Button
@@ -1479,7 +1479,7 @@ export default async function AppLayout({ children }: { children: React.Node }) 
     <div>
       <nav className="border-b p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">ResearchHub</h1>
+          <h1 className="text-xl font-bold">Apex</h1>
           <div className="flex items-center gap-4">
             <span>{session.user?.name}</span>
             <button onClick={() => signOut()}>Sign Out</button>
@@ -1741,16 +1741,16 @@ export default function RootLayout({ children }) {
 
 ```bash
 # Check if PostgreSQL is running
-docker ps | grep researchhub-db
+docker ps | grep apex-db
 
 # Check logs
-docker logs researchhub-db
+docker logs apex-db
 
 # Restart container
-docker restart researchhub-db
+docker restart apex-db
 
 # Test connection
-psql postgresql://postgres:devpassword@localhost:5432/researchhub_dev
+psql postgresql://postgres:devpassword@localhost:5432/apex_dev
 ```
 
 ### OAuth Errors
@@ -1815,9 +1815,9 @@ npm run format                 # Format with Prettier
 
 # Docker
 docker ps                      # List running containers
-docker logs researchhub-db     # View logs
-docker restart researchhub-db  # Restart database
-docker stop researchhub-db     # Stop database
+docker logs apex-db     # View logs
+docker restart apex-db  # Restart database
+docker stop apex-db     # Stop database
 ```
 
 ---
