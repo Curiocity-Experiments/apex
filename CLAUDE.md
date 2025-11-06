@@ -181,66 +181,11 @@ Required variables (see `.env` - not in repo):
 - `LLAMA_CLOUD_API_KEY`: LlamaCloud API for parsing
 - `DISABLE_PARSING`: Set to `true` to disable resource parsing
 
-## Testing Guidelines
+## Testing
 
-**Reference**: See [docs/TDD-GUIDE.md](./docs/TDD-GUIDE.md) and [docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md](./docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md)
+**📖 Guides**: [TDD-GUIDE.md](./docs/TDD-GUIDE.md) | [Behavior vs Implementation](./docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md)
 
-### Key Principles
-
-1. **Test Behavior, Not Implementation**
-   - ✅ Test WHAT is returned
-   - ❌ Don't test HOW it's done
-   - See: docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md
-
-2. **RED-GREEN-REFACTOR**
-   - Write failing test first (RED)
-   - Make it pass (GREEN)
-   - Clean up code (REFACTOR)
-
-3. **Coverage Goals**
-   - Domain entities: 100%
-   - Repositories: 100%
-   - Services: 95%
-   - Overall: 90%+
-
-### Running Tests
-
-```bash
-npm test                  # Run all tests
-npm test:watch           # Watch mode
-npm test:coverage        # With coverage report
-npm test Report.test.ts  # Single file
-```
-
-### Example Test (Behavior-Focused)
-
-```typescript
-it('should return active reports for user', async () => {
-  const mockReports = [
-    { id: 'r1', userId: 'user-123', deletedAt: null },
-    { id: 'r2', userId: 'user-123', deletedAt: null },
-  ];
-  prismaMock.report.findMany.mockResolvedValue(mockReports);
-
-  const result = await repository.findByUserId('user-123');
-
-  // ✅ Test BEHAVIOR
-  expect(result).toHaveLength(2);
-  result.forEach((r) => {
-    expect(r.userId).toBe('user-123');
-    expect(r.deletedAt).toBeNull();
-  });
-});
-```
-
-**Anti-Pattern to Avoid**:
-
-```typescript
-// ❌ DON'T test implementation
-expect(prismaMock.report.findMany).toHaveBeenCalledWith({
-  /* ... */
-});
-```
+**Commands**: `npm test` | `npm test:watch` | `npm test:coverage`
 
 ## Test Configuration
 

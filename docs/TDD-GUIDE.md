@@ -19,7 +19,6 @@
 8. [CI/CD Integration](#8-cicd-integration)
 9. [Coverage Goals & Metrics](#9-coverage-goals--metrics)
 10. [Troubleshooting & FAQ](#10-troubleshooting--faq)
-11. [Testing Anti-Patterns](#11-testing-anti-patterns)
 
 ---
 
@@ -1903,97 +1902,6 @@ A: Use `jest.useFakeTimers()` and control time in tests.
 
 **Q: Should I test third-party libraries?**
 A: No, assume they work. Mock them and test your integration with them.
-
----
-
-## 11. Testing Anti-Patterns
-
-### ❌ Anti-Pattern 1: Testing Implementation
-
-**Problem**:
-
-```typescript
-// ❌ DON'T: Test how Prisma is called
-expect(prismaMock.report.findMany).toHaveBeenCalledWith({
-  where: { userId: 'user-123', deletedAt: null },
-});
-```
-
-**Solution**:
-
-```typescript
-// ✅ DO: Test what is returned
-expect(result).toHaveLength(2);
-expect(result[0].userId).toBe('user-123');
-```
-
-**Why**: Implementation tests break on refactoring, behavior tests don't.
-
-**Reference**: See [TDD-BEHAVIOR-VS-IMPLEMENTATION.md](./TDD-BEHAVIOR-VS-IMPLEMENTATION.md)
-
----
-
-### ❌ Anti-Pattern 2: Testing Private Methods
-
-**Problem**:
-
-```typescript
-// ❌ DON'T: Test internal methods
-expect(service['internalHelper']).toHaveBeenCalled();
-```
-
-**Solution**:
-
-```typescript
-// ✅ DO: Test public API behavior
-expect(result).toBe(expectedValue);
-```
-
----
-
-### ❌ Anti-Pattern 3: Multiple Assertions for Same Behavior
-
-**Problem**:
-
-```typescript
-// ❌ DON'T: Over-specify
-expect(result.property1).toBe('value');
-expect(result.property2).toBe('value');
-// ... 10 more assertions
-expect(prismaMock.method).toHaveBeenCalled(); // Also redundant
-```
-
-**Solution**:
-
-```typescript
-// ✅ DO: Test key properties
-expect(result).toMatchObject({
-  property1: 'value',
-  property2: 'value',
-});
-```
-
----
-
-### ❌ Anti-Pattern 4: Testing Framework Features
-
-**Problem**:
-
-```typescript
-// ❌ DON'T: Test that Prisma works
-expect(prismaMock.report.findUnique).toBeDefined();
-```
-
-**Solution**:
-
-```typescript
-// ✅ DO: Test YOUR code
-expect(await repository.findById('id')).not.toBeNull();
-```
-
----
-
-**Quick Check**: If refactoring breaks your test but behavior is unchanged, you're testing implementation.
 
 ---
 
