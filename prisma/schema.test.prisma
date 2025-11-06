@@ -1,0 +1,109 @@
+// Test Database Schema (SQLite)
+// This schema is used for integration tests
+// Production uses PostgreSQL (schema.prisma)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/test-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("TEST_DATABASE_URL")
+}
+
+// Users
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  provider  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reports  Report[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+// Sessions (NextAuth)
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  sessionToken String   @unique @map("session_token")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Reports
+model Report {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  name      String
+  content   String    @default("")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents  Document[]
+  reportTags ReportTag[]
+
+  @@index([userId, createdAt])
+  @@map("reports")
+}
+
+// Documents
+model Document {
+  id            String    @id @default(uuid())
+  reportId      String    @map("report_id")
+  filename      String
+  fileHash      String    @map("file_hash")
+  storagePath   String    @map("storage_path")
+  parsedContent String?   @map("parsed_content")
+  notes         String    @default("")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  report       Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  documentTags DocumentTag[]
+
+  @@unique([reportId, fileHash])
+  @@index([reportId])
+  @@map("documents")
+}
+
+// Report Tags
+model ReportTag {
+  id       String @id @default(uuid())
+  reportId String @map("report_id")
+  tag      String
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, tag])
+  @@index([reportId])
+  @@map("report_tags")
+}
+
+// Document Tags
+model DocumentTag {
+  id         String @id @default(uuid())
+  documentId String @map("document_id")
+  tag        String
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, tag])
+  @@index([documentId])
+  @@map("document_tags")
+}
