@@ -51,10 +51,30 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
     return <div className='p-4'>Loading...</div>;
   }
 
+  // Determine save status
+  const getSaveStatus = () => {
+    if (updateReport.isPending) {
+      return <span className='text-sm text-gray-500'>Saving...</span>;
+    }
+    if (updateReport.isError) {
+      return <span className='text-sm text-red-600'>Error saving</span>;
+    }
+    if (content !== debouncedContent) {
+      return <span className='text-sm text-gray-400'>Unsaved changes</span>;
+    }
+    if (initialContent !== content) {
+      return null; // Waiting for debounce
+    }
+    return <span className='text-sm text-green-600'>All changes saved</span>;
+  };
+
   return (
     <div className='flex h-full flex-col'>
       <div className='border-b p-4'>
-        <h1 className='text-2xl font-bold'>{report.name}</h1>
+        <div className='flex items-center justify-between'>
+          <h1 className='text-2xl font-bold'>{report.name}</h1>
+          {getSaveStatus()}
+        </div>
       </div>
       <div className='flex-1 p-4'>
         <SimpleMDE
