@@ -1,0 +1,84 @@
+/**
+ * NextAuth Configuration
+ *
+ * Configures authentication using magic link email (Resend).
+ * No passwords - users receive a one-time link via email.
+ *
+ * @see docs/DEVELOPER-GUIDE.md - Phase 3: Authentication
+ * @see https://next-auth.js.org/configuration/providers/email
+ */
+
+import { NextAuthOptions } from 'next-auth';
+import EmailProvider from 'next-auth/providers/email';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { prisma } from '@/lib/db';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    EmailProvider({
+      server: '', // Not used with Resend
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
+      sendVerificationRequest: async ({ identifier: email, url }) => {
+        try {
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
+            to: email,
+            subject: 'Sign in to Apex',
+            html: `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="utf-8">
+                  <title>Sign in to Apex</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h1 style="color: #2563eb;">Sign in to Apex</h1>
+                    <p>Click the button below to sign in to your Apex account:</p>
+                    <div style="margin: 30px 0;">
+                      <a href="${url}"
+                         style="background-color: #2563eb; color: white; padding: 12px 24px;
+                                text-decoration: none; border-radius: 6px; display: inline-block;">
+                        Sign in to Apex
+                      </a>
+                    </div>
+                    <p style="color: #666; font-size: 14px;">
+                      This link will expire in 24 hours and can only be used once.
+                    </p>
+                    <p style="color: #666; font-size: 14px;">
+                      If you didn't request this email, you can safely ignore it.
+                    </p>
+                  </div>
+                </body>
+              </html>
+            `,
+          });
+        } catch (error) {
+          console.error('Failed to send magic link email:', error);
+          throw new Error('Failed to send verification email');
+        }
+      },
+    }),
+  ],
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+      }
+      return session;
+    },
+  },
+  pages: {
+    signIn: '/login',
+    verifyRequest: '/verify-request',
+    error: '/auth/error',
+  },
+  session: {
+    strategy: 'database',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+};
