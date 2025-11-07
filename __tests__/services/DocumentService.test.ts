@@ -240,4 +240,142 @@ describe('DocumentService', () => {
       );
     });
   });
+
+  describe('updateDocument', () => {
+    it('should update document filename', async () => {
+      const docId = 'doc-123';
+      const mockDoc: Document = {
+        id: docId,
+        reportId: 'report-123',
+        filename: 'old-name.pdf',
+        fileHash: 'abc123',
+        storagePath: '/storage/test.pdf',
+        parsedContent: null,
+        notes: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      mockDocumentRepo.findById.mockResolvedValue(mockDoc);
+      mockDocumentRepo.save.mockImplementation(async (doc) => doc);
+
+      const result = await service.updateDocument(docId, {
+        filename: 'new-name.pdf',
+      });
+
+      // ✅ Test BEHAVIOR: filename updated
+      expect(result.filename).toBe('new-name.pdf');
+      expect(result.id).toBe(docId);
+    });
+
+    it('should update document notes', async () => {
+      const docId = 'doc-123';
+      const mockDoc: Document = {
+        id: docId,
+        reportId: 'report-123',
+        filename: 'test.pdf',
+        fileHash: 'abc123',
+        storagePath: '/storage/test.pdf',
+        parsedContent: null,
+        notes: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      mockDocumentRepo.findById.mockResolvedValue(mockDoc);
+      mockDocumentRepo.save.mockImplementation(async (doc) => doc);
+
+      const result = await service.updateDocument(docId, {
+        notes: 'Important document for Q4 analysis',
+      });
+
+      // ✅ Test BEHAVIOR: notes updated
+      expect(result.notes).toBe('Important document for Q4 analysis');
+      expect(result.id).toBe(docId);
+    });
+
+    it('should update both filename and notes', async () => {
+      const docId = 'doc-123';
+      const mockDoc: Document = {
+        id: docId,
+        reportId: 'report-123',
+        filename: 'old.pdf',
+        fileHash: 'abc123',
+        storagePath: '/storage/test.pdf',
+        parsedContent: null,
+        notes: 'old notes',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      mockDocumentRepo.findById.mockResolvedValue(mockDoc);
+      mockDocumentRepo.save.mockImplementation(async (doc) => doc);
+
+      const result = await service.updateDocument(docId, {
+        filename: 'new.pdf',
+        notes: 'new notes',
+      });
+
+      // ✅ Test BEHAVIOR: both fields updated
+      expect(result.filename).toBe('new.pdf');
+      expect(result.notes).toBe('new notes');
+    });
+  });
+
+  describe('searchDocuments', () => {
+    it('should search documents by query', async () => {
+      const reportId = 'report-123';
+      const query = 'earnings';
+
+      const mockDocs: Document[] = [
+        {
+          id: 'doc-1',
+          reportId,
+          filename: 'Q4-earnings.pdf',
+          fileHash: 'hash1',
+          storagePath: '/storage/doc1.pdf',
+          parsedContent: null,
+          notes: '',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+        {
+          id: 'doc-2',
+          reportId,
+          filename: 'earnings-report.pdf',
+          fileHash: 'hash2',
+          storagePath: '/storage/doc2.pdf',
+          parsedContent: null,
+          notes: '',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ];
+
+      mockDocumentRepo.search.mockResolvedValue(mockDocs);
+
+      const result = await service.searchDocuments(reportId, query);
+
+      // ✅ Test BEHAVIOR: matching documents returned
+      expect(result).toEqual(mockDocs);
+      expect(result).toHaveLength(2);
+    });
+
+    it('should return empty array when no matches', async () => {
+      const reportId = 'report-123';
+      const query = 'nonexistent';
+
+      mockDocumentRepo.search.mockResolvedValue([]);
+
+      const result = await service.searchDocuments(reportId, query);
+
+      // ✅ Test BEHAVIOR: empty array for no matches
+      expect(result).toEqual([]);
+    });
+  });
 });

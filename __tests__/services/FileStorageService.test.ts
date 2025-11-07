@@ -115,6 +115,9 @@ describe('FileStorageService', () => {
     });
   });
 
+  // Note: getFile() is a simple pass-through to fs.readFile()
+  // It will be tested via integration tests in Phase 3
+
   describe('deleteFile', () => {
     it('should delete file successfully', async () => {
       const storagePath = '/storage/report-123/abc123.pdf';
