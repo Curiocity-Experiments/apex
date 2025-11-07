@@ -35,6 +35,9 @@ yarn-error.log*
 # LocalStack data
 localstack-data/
 
+# Local file storage (FileStorageService)
+storage/
+
 # vercel
 .vercel
 
