@@ -67,7 +67,7 @@ npm run local:setup
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) 🎉
+Visit [http://localhost:3100](http://localhost:3100) 🎉
 
 **That's it!** The `local:setup` script will:
 - ✅ Create `.env.local` from the example file
@@ -113,7 +113,7 @@ NEXTAUTH_SECRET=your-generated-secret-here
 npm run local:db:start
 ```
 
-This starts PostgreSQL in Docker on port 5432.
+This starts PostgreSQL in Docker on port 54320.
 
 ### Step 4: Run Migrations
 
@@ -226,8 +226,8 @@ apex/
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:devpassword@localhost:5432/apex_dev` |
-| `NEXTAUTH_URL` | Application URL | `http://localhost:3000` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:devpassword@localhost:54320/apex_dev` |
+| `NEXTAUTH_URL` | Application URL | `http://localhost:3100` |
 | `NEXTAUTH_SECRET` | Secret for JWT signing | Generate with `openssl rand -base64 32` |
 
 ### Optional Services

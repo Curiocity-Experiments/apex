@@ -148,7 +148,7 @@ prisma/
 ### Database (PostgreSQL + Prisma)
 
 **Connection:**
-- Development: Docker container on `localhost:5432`
+- Development: Docker container on `localhost:54320`
 - Configuration: `lib/db.ts` (Prisma client singleton)
 - Connection string: `DATABASE_URL` environment variable
 
@@ -275,10 +275,10 @@ Required variables for local development (see `.env.local.example`):
 
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/apex_dev
+DATABASE_URL=postgresql://postgres:devpassword@localhost:54320/apex_dev
 
 # NextAuth
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3100
 NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
 
 # Optional: Google OAuth
