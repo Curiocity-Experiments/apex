@@ -56,7 +56,22 @@ fi
 
 # Start PostgreSQL container
 print_step "Starting PostgreSQL container..."
-docker compose up -d postgres
+
+# Check if container exists
+if docker ps -a --format '{{.Names}}' | grep -q '^apex-db$'; then
+    # Container exists, check if it's running
+    if docker ps --format '{{.Names}}' | grep -q '^apex-db$'; then
+        print_success "PostgreSQL container already running"
+    else
+        print_step "Starting existing PostgreSQL container..."
+        docker start apex-db
+        print_success "PostgreSQL container started"
+    fi
+else
+    # Container doesn't exist, create it
+    docker compose up -d postgres
+    print_success "PostgreSQL container created and started"
+fi
 
 # Wait for PostgreSQL to be ready
 print_step "Waiting for PostgreSQL to be ready..."
@@ -123,6 +138,12 @@ echo ""
 echo "Useful commands:"
 echo "  npm run dev              - Start development server"
 echo "  npm run local:db:stop    - Stop PostgreSQL container"
+echo "  npm run local:db:restart - Restart PostgreSQL container"
 echo "  npm run local:db:reset   - Reset database and reseed"
 echo "  npx prisma studio        - Open Prisma Studio (database browser)"
+echo ""
+echo "Troubleshooting:"
+echo "  docker ps                     - View running containers"
+echo "  docker rm -f apex-db          - Remove existing container (if stuck)"
+echo "  docker volume rm apex_apex-pgdata  - Delete all database data"
 echo ""
