@@ -58,6 +58,11 @@ export function ReportList() {
               Cancel
             </Button>
           </div>
+          {createReport.isError && (
+            <p className='mt-2 text-sm text-red-600' role='alert'>
+              Failed to create report. Please try again.
+            </p>
+          )}
         </Card>
       )}
 

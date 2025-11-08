@@ -12,6 +12,7 @@ import { useDocuments } from '@/hooks/useDocuments';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trash2 } from 'lucide-react';
+import { DocumentUpload } from './DocumentUpload';
 
 interface DocumentListProps {
   reportId: string;
@@ -34,8 +35,10 @@ export function DocumentList({ reportId }: DocumentListProps) {
     <div className='h-full overflow-y-auto p-4'>
       <h2 className='mb-4 text-xl font-semibold'>Documents</h2>
 
+      <DocumentUpload reportId={reportId} />
+
       {documents.length === 0 ? (
-        <p className='text-sm text-gray-500'>No documents yet</p>
+        <p className='text-sm text-gray-500'>No documents yet. Upload your first document!</p>
       ) : (
         <div className='space-y-2'>
           {documents.map((doc) => (
