@@ -52,17 +52,18 @@ export const authOptions: NextAuthOptions = {
             },
           }),
         ]
-      : []),
-    EmailProvider({
-      server: '', // Not used with Resend
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
-      sendVerificationRequest: async ({ identifier: email, url }) => {
-        try {
-          await resend.emails.send({
+      : [
+          // Production-only: Magic link email provider
+          EmailProvider({
+            server: '', // Not used with Resend
             from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
-            to: email,
-            subject: 'Sign in to Apex',
-            html: `
+            sendVerificationRequest: async ({ identifier: email, url }) => {
+              try {
+                await resend.emails.send({
+                  from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
+                  to: email,
+                  subject: 'Sign in to Apex',
+                  html: `
               <!DOCTYPE html>
               <html>
                 <head>
@@ -90,13 +91,14 @@ export const authOptions: NextAuthOptions = {
                 </body>
               </html>
             `,
-          });
-        } catch (error) {
-          console.error('Failed to send magic link email:', error);
-          throw new Error('Failed to send verification email');
-        }
-      },
-    }),
+                });
+              } catch (error) {
+                console.error('Failed to send magic link email:', error);
+                throw new Error('Failed to send verification email');
+              }
+            },
+          }),
+        ]),
   ],
   callbacks: {
     async jwt({ token, user }) {
