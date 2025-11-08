@@ -18,7 +18,16 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "ts-node prisma/seed.ts",
+    "local:setup": "bash scripts/local-setup.sh",
+    "local:db:start": "docker-compose up -d postgres",
+    "local:db:stop": "docker-compose stop postgres",
+    "local:db:restart": "docker-compose restart postgres",
+    "local:db:reset": "npx prisma migrate reset --force && npm run db:seed",
+    "local:db:logs": "docker-compose logs -f postgres"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

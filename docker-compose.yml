@@ -1,25 +1,30 @@
 version: '3.8'
 
 services:
-  localstack:
-    image: localstack/localstack:latest
-    container_name: curiocity-localstack
+  postgres:
+    image: postgres:16-alpine
+    container_name: apex-db
+    restart: unless-stopped
     ports:
-      - "4566:4566"            # LocalStack Gateway
-      - "4510-4559:4510-4559"  # External services port range
+      - "5432:5432"
     environment:
-      - SERVICES=dynamodb,s3
-      - DEBUG=1
-      - AWS_DEFAULT_REGION=us-west-1
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - PERSISTENCE=1
-      - DATA_DIR=/tmp/localstack/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: apex_dev
     volumes:
-      - "./localstack-data:/tmp/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - apex-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d apex_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - curiocity-network
+      - apex-network
+
+volumes:
+  apex-pgdata:
+    driver: local
 
 networks:
-  curiocity-network:
+  apex-network:
     driver: bridge
