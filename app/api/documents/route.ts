@@ -1,7 +1,8 @@
 /**
- * POST /api/documents - Upload Document
+ * GET & POST /api/documents - Document Operations
  *
- * Handles multipart/form-data file uploads for documents.
+ * GET - List documents for a report
+ * POST - Upload a new document (multipart/form-data)
  *
  * @see docs/DEVELOPER-GUIDE.md - Phase 3: API Routes (Step 16)
  * @see docs/TECHNICAL-SPECIFICATION.md - Section 5.2 (API Routes)
@@ -15,6 +16,58 @@ import { PrismaDocumentRepository } from '@/infrastructure/repositories/PrismaDo
 import { FileStorageService } from '@/services/FileStorageService';
 import { ParserService } from '@/services/ParserService';
 import { prisma } from '@/lib/db';
+
+/**
+ * GET /api/documents?reportId={id} - List documents for a report
+ *
+ * Query parameters:
+ * - reportId: ID of the report to fetch documents for
+ *
+ * Returns:
+ * - 200: Array of documents
+ * - 400: Missing reportId
+ * - 401: Unauthorized
+ */
+export async function GET(request: NextRequest) {
+  // Check authentication
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Get reportId from query parameters
+  const { searchParams } = new URL(request.url);
+  const reportId = searchParams.get('reportId');
+
+  if (!reportId) {
+    return NextResponse.json(
+      { error: 'reportId query parameter is required' },
+      { status: 400 },
+    );
+  }
+
+  // Initialize service with dependencies
+  const documentService = new DocumentService(
+    new PrismaDocumentRepository(prisma),
+    new FileStorageService(),
+    new ParserService(),
+  );
+
+  try {
+    // Fetch documents for the report
+    const documents = await documentService.listDocuments(reportId);
+
+    // Return documents
+    return NextResponse.json(documents, { status: 200 });
+  } catch (error) {
+    // Handle unexpected errors
+    console.error('Error fetching documents:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    );
+  }
+}
 
 /**
  * POST /api/documents - Upload a new document
