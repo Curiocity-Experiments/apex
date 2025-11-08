@@ -18,7 +18,8 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Don't use adapter in development (CredentialsProvider requires JWT sessions)
+  adapter: process.env.NODE_ENV === 'development' ? undefined : PrismaAdapter(prisma),
   providers: [
     // Development-only: Email login without magic link
     ...(process.env.NODE_ENV === 'development'
@@ -98,9 +99,17 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      // Add user id to JWT token on sign in
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, user, token }) {
+      // Add user id to session from either database user or JWT token
       if (session.user) {
-        session.user.id = user.id;
+        session.user.id = user?.id || token?.id;
       }
       return session;
     },
@@ -111,7 +120,8 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   session: {
-    strategy: 'database',
+    // Use JWT in development (required for CredentialsProvider), database in production
+    strategy: process.env.NODE_ENV === 'development' ? 'jwt' : 'database',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 };
