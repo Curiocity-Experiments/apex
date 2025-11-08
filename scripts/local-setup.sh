@@ -56,12 +56,12 @@ fi
 
 # Start PostgreSQL container
 print_step "Starting PostgreSQL container..."
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # Wait for PostgreSQL to be ready
 print_step "Waiting for PostgreSQL to be ready..."
 RETRIES=30
-until docker-compose exec -T postgres pg_isready -U postgres -d apex_dev > /dev/null 2>&1 || [ $RETRIES -eq 0 ]; do
+until docker compose exec -T postgres pg_isready -U postgres -d apex_dev > /dev/null 2>&1 || [ $RETRIES -eq 0 ]; do
     echo -n "."
     sleep 1
     RETRIES=$((RETRIES-1))
@@ -70,7 +70,7 @@ echo ""
 
 if [ $RETRIES -eq 0 ]; then
     print_error "PostgreSQL failed to start within 30 seconds"
-    docker-compose logs postgres
+    docker compose logs postgres
     exit 1
 fi
 print_success "PostgreSQL is ready"
