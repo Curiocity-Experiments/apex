@@ -16,8 +16,17 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('✓ Cleaned existing data\n');
 
-  // Create sample users
+  // Create dev admin user (for local development)
   console.log('👤 Creating users...');
+  const devUser = await prisma.user.create({
+    data: {
+      email: 'dev@local.apex',
+      name: 'Dev User',
+      provider: 'dev',
+    },
+  });
+  console.log(`✓ Created ${devUser.name} (${devUser.email}) [DEV ADMIN]`);
+
   const user1 = await prisma.user.create({
     data: {
       email: 'sarah.analyst@example.com',
@@ -196,9 +205,9 @@ Analysis of solar, wind, and battery storage opportunities...`,
   console.log(`   Documents: ${documentCount}`);
   console.log('\n✅ Database seeded successfully!\n');
 
-  console.log('🔐 Login Credentials:');
-  console.log(`   Email: ${user1.email}`);
-  console.log('   (Use magic link authentication)\n');
+  console.log('🔐 Development Login:');
+  console.log(`   Email: ${devUser.email}`);
+  console.log('   (No password needed in development mode)\n');
 }
 
 main()

@@ -10,6 +10,7 @@
 
 import { NextAuthOptions } from 'next-auth';
 import EmailProvider from 'next-auth/providers/email';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/db';
 import { Resend } from 'resend';
@@ -19,6 +20,38 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
+    // Development-only: Email login without magic link
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          CredentialsProvider({
+            id: 'dev-login',
+            name: 'Development Login',
+            credentials: {
+              email: { label: 'Email', type: 'email' },
+            },
+            async authorize(credentials) {
+              if (!credentials?.email) return null;
+
+              // Find or create user for development
+              const user = await prisma.user.upsert({
+                where: { email: credentials.email },
+                update: {},
+                create: {
+                  email: credentials.email,
+                  name: credentials.email.split('@')[0],
+                  provider: 'dev',
+                },
+              });
+
+              return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+              };
+            },
+          }),
+        ]
+      : []),
     EmailProvider({
       server: '', // Not used with Resend
       from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',

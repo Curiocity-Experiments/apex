@@ -23,7 +23,10 @@ export default function LoginPage() {
     if (!email.trim()) return;
 
     setIsLoading(true);
-    await signIn('email', { email, callbackUrl: '/reports' });
+    // Use dev-login in development (no email sent), email provider in production
+    const provider =
+      process.env.NODE_ENV === 'development' ? 'dev-login' : 'email';
+    await signIn(provider, { email, callbackUrl: '/reports' });
   };
 
   return (
