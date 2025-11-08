@@ -14,6 +14,7 @@ import { DocumentService } from '@/services/DocumentService';
 import { PrismaDocumentRepository } from '@/infrastructure/repositories/PrismaDocumentRepository';
 import { FileStorageService } from '@/services/FileStorageService';
 import { ParserService } from '@/services/ParserService';
+import { prisma } from '@/lib/db';
 
 /**
  * POST /api/documents - Upload a new document
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   // Initialize service with dependencies
   const documentService = new DocumentService(
-    new PrismaDocumentRepository(),
+    new PrismaDocumentRepository(prisma),
     new FileStorageService(),
     new ParserService(),
   );

@@ -22,7 +22,7 @@ describe('ReportList', () => {
   });
 
   describe('Loading state', () => {
-    it('should display loading state', () => {
+    it('should display loading skeleton', () => {
       mockUseReports.mockReturnValue({
         reports: [],
         isLoading: true,
@@ -34,9 +34,11 @@ describe('ReportList', () => {
         deleteReport: { mutateAsync: jest.fn() } as any,
       });
 
-      render(<ReportList />);
+      const { container } = render(<ReportList />);
 
-      expect(screen.getByText(/loading reports/i)).toBeInTheDocument();
+      // Check for skeleton loading elements
+      const skeletons = container.querySelectorAll('.animate-pulse');
+      expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 

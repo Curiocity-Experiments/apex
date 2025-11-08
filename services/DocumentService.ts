@@ -163,8 +163,14 @@ export class DocumentService {
    * @private
    */
   private async calculateHash(file: File | Buffer): Promise<string> {
-    const buffer =
-      file instanceof Buffer ? file : Buffer.from(await file.arrayBuffer());
+    let buffer: Buffer;
+    if (file instanceof Buffer) {
+      buffer = file;
+    } else if (typeof (file as File).arrayBuffer === 'function') {
+      buffer = Buffer.from(await (file as File).arrayBuffer());
+    } else {
+      throw new Error('Unsupported file type');
+    }
     return crypto.createHash('sha256').update(buffer).digest('hex');
   }
 }

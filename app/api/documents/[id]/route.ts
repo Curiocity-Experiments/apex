@@ -14,6 +14,7 @@ import { DocumentService } from '@/services/DocumentService';
 import { PrismaDocumentRepository } from '@/infrastructure/repositories/PrismaDocumentRepository';
 import { FileStorageService } from '@/services/FileStorageService';
 import { ParserService } from '@/services/ParserService';
+import { prisma } from '@/lib/db';
 
 /**
  * GET /api/documents/[id] - Get a single document
@@ -35,7 +36,7 @@ export async function GET(
 
   // Initialize service with dependencies
   const documentService = new DocumentService(
-    new PrismaDocumentRepository(),
+    new PrismaDocumentRepository(prisma),
     new FileStorageService(),
     new ParserService(),
   );
@@ -80,7 +81,7 @@ export async function DELETE(
 
   // Initialize service with dependencies
   const documentService = new DocumentService(
-    new PrismaDocumentRepository(),
+    new PrismaDocumentRepository(prisma),
     new FileStorageService(),
     new ParserService(),
   );

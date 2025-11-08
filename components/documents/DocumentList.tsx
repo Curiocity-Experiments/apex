@@ -8,11 +8,14 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useDocuments } from '@/hooks/useDocuments';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 import { DocumentUpload } from './DocumentUpload';
+import { DocumentListSkeleton } from './DocumentListSkeleton';
 
 interface DocumentListProps {
   reportId: string;
@@ -20,15 +23,23 @@ interface DocumentListProps {
 
 export function DocumentList({ reportId }: DocumentListProps) {
   const { documents, isLoading, deleteDocument } = useDocuments(reportId);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
-  const handleDelete = async (documentId: string) => {
-    if (confirm('Are you sure you want to delete this document?')) {
-      await deleteDocument.mutateAsync(documentId);
+  const handleDeleteClick = (documentId: string) => {
+    setDocumentToDelete(documentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (documentToDelete) {
+      await deleteDocument.mutateAsync(documentToDelete);
+      setDocumentToDelete(null);
     }
   };
 
   if (isLoading) {
-    return <div className='p-4'>Loading documents...</div>;
+    return <DocumentListSkeleton />;
   }
 
   return (
@@ -38,7 +49,9 @@ export function DocumentList({ reportId }: DocumentListProps) {
       <DocumentUpload reportId={reportId} />
 
       {documents.length === 0 ? (
-        <p className='text-sm text-gray-500'>No documents yet. Upload your first document!</p>
+        <p className='text-sm text-gray-500'>
+          No documents yet. Upload your first document!
+        </p>
       ) : (
         <div className='space-y-2'>
           {documents.map((doc) => (
@@ -53,7 +66,7 @@ export function DocumentList({ reportId }: DocumentListProps) {
                 <Button
                   variant='ghost'
                   size='sm'
-                  onClick={() => handleDelete(doc.id)}
+                  onClick={() => handleDeleteClick(doc.id)}
                   aria-label='Delete'
                 >
                   <Trash2 className='h-4 w-4' />
@@ -63,6 +76,17 @@ export function DocumentList({ reportId }: DocumentListProps) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        title='Delete Document'
+        description='Are you sure you want to delete this document? This action cannot be undone.'
+        confirmText='Delete'
+        cancelText='Cancel'
+        variant='destructive'
+      />
     </div>
   );
 }
