@@ -1,0 +1,268 @@
+================================================================================
+                    APEX TEST COVERAGE & BEHAVIOR ANALYSIS
+                              SUMMARY REPORT
+                            November 8, 2025
+================================================================================
+
+OVERALL METRICS
+───────────────────────────────────────────────────────────────────────────────
+                  Current     Target      Gap          Status
+Statements        57.18%      90%         -32.82%      ❌ FAIL
+Branches          46.62%      85%         -38.38%      ❌ FAIL
+Lines             58.23%      90%         -31.77%      ❌ FAIL
+Functions         60%         90%         -30%         ❌ FAIL
+
+Test Count        230         -           -            ⚠️  2 failing
+Test Files        20          -           -            ✅ Adequate
+
+
+LAYER-BY-LAYER BREAKDOWN
+───────────────────────────────────────────────────────────────────────────────
+
+Domain Entities & Types
+  Report.ts                                           ████████████████ 100% ✅
+  Document.ts                                         ████████████████ 100% ✅
+  Overall                                             ████████████████ 100% ✅
+
+Repositories (Database)
+  PrismaReportRepository.ts                           ████████████████ 100% ✅
+  PrismaDocumentRepository.ts                         ████████████████ 100% ✅
+  Overall                                             ████████████████ 100% ✅
+
+Services (Business Logic)
+  ReportService.ts                                    ████████████████ 100% ✅
+  DocumentService.ts (branches)                       ██████████░░░░░░  56% ⚠️
+  FileStorageService.ts                               █████████░░░░░░░░  73% ⚠️
+  ParserService.ts                                    ████████░░░░░░░░░  80% ⚠️
+  Overall                                             █████████░░░░░░░░  88% ⚠️
+
+API Routes (HTTP Endpoints)
+  /api/reports [POST/GET]                             ███████████████░░  95% ✅
+  /api/reports/[id] [GET/PATCH/DELETE]                ███████████████░░  95% ✅
+  /api/documents [POST/GET]                           ░░░░░░░░░░░░░░░░░   0% ❌ (Prisma error)
+  /api/documents/[id] [PATCH/DELETE]                  ░░░░░░░░░░░░░░░░░   0% ❌ (Prisma error)
+  Overall                                             ███████████░░░░░░  70% ⚠️
+
+Data Fetching Hooks
+  useReports.ts (branches)                            ███████████░░░░░░  60% ⚠️
+  useDocuments.ts (branches)                          ████░░░░░░░░░░░░░  40% ⚠️
+  useReport.ts                                        ░░░░░░░░░░░░░░░░░  12% ❌
+  useDebounce.ts (branches)                           ░░░░░░░░░░░░░░░░░   0% ❌
+  Overall                                             ██████░░░░░░░░░░░  28% ❌
+
+Components (React UI)
+  ReportList & ReportCard                             ████████████████ 100% ✅
+  ReportEditor                                        ██████████████░░░  86% ✅
+  ReportListSkeleton                                  ████████████████ 100% ✅
+  DocumentUpload                                      ░░░░░░░░░░░░░░░░░   0% ❌
+  ErrorBoundary                                       ░░░░░░░░░░░░░░░░░   0% ❌
+  SessionHandler                                      ░░░░░░░░░░░░░░░░░   0% ❌
+  AppNav, AppLayoutClient                             ░░░░░░░░░░░░░░░░░   0% ❌
+  Overall                                             ███░░░░░░░░░░░░░░  40% ❌
+
+Pages & Auth
+  LoginPage                                           ░░░░░░░░░░░░░░░░░   0% ❌
+  ReportDetailPage                                    ░░░░░░░░░░░░░░░░░   0% ❌
+  ReportsPage                                         ░░░░░░░░░░░░░░░░░   0% ❌
+  Auth configuration                                  ░░░░░░░░░░░░░░░░░   0% ❌
+  DB initialization                                   ░░░░░░░░░░░░░░░░░   0% ❌
+  Context providers                                   ░░░░░░░░░░░░░░░░░   0% ❌
+  Overall                                             ░░░░░░░░░░░░░░░░░   0% ❌
+
+UI Components Library
+  button.tsx                                          █████████░░░░░░░░  90% ✅
+  input.tsx                                           ████████████████ 100% ✅
+  skeleton.tsx                                        ████████████████ 100% ✅
+  dialog.tsx, card.tsx, label.tsx                     ██████░░░░░░░░░░░  75% ⚠️
+  confirm-dialog.tsx (branches)                       ██░░░░░░░░░░░░░░░  29% ❌
+  Overall                                             ████████░░░░░░░░░  75% ⚠️
+
+
+CRITICAL WORKFLOWS STATUS
+───────────────────────────────────────────────────────────────────────────────
+
+Tier 1: Core Features (Must Work)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ User Login/Authentication                                         0% ❌    │
+│  - LoginPage component: untested                                           │
+│  - NextAuth integration: untested                                          │
+│  - Session persistence: untested                                           │
+│  Risk: 🔴 CRITICAL - Users can't access app                              │
+│────────────────────────────────────────────────────────────────────────────│
+│ Create New Report                                                60% ⚠️    │
+│  - API tested ✅ | Service tested ✅ | UI interaction untested ❌        │
+│  Risk: 🟡 MODERATE - Feature works but UX not validated                  │
+│────────────────────────────────────────────────────────────────────────────│
+│ Edit Report Content                                              50% ⚠️    │
+│  - API tested ✅ | Service tested ✅ | Component gaps at 14.29% ❌       │
+│  Risk: 🟡 MODERATE - Feature works but error cases untested               │
+│────────────────────────────────────────────────────────────────────────────│
+│ Upload Document to Report                                        20% ❌    │
+│  - Service backend tested ✅ | Upload component UNTESTED ❌               │
+│  - File validation feedback: untested ❌                                   │
+│  Risk: 🔴 CRITICAL - Core feature lacks user interaction tests            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Tier 2: Important Features
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ View Report + Documents                                          70% ✅    │
+│  - Data fetching tested ✅ | Layout composition untested ❌                │
+│  Risk: 🟡 MODERATE                                                       │
+│────────────────────────────────────────────────────────────────────────────│
+│ Delete Report                                                    50% ⚠️    │
+│  - API tested ✅ | UI interaction untested ❌                             │
+│  Risk: 🟡 MODERATE                                                       │
+│────────────────────────────────────────────────────────────────────────────│
+│ Search/Filter Reports                                            40% ⚠️    │
+│  - Service logic tested ✅ | UI debounce untested ❌                      │
+│  Risk: 🟡 MODERATE                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Tier 3: System Features
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Delete Document                                                   0% ❌    │
+│  - Completely untested (API routes failing)                                │
+│  Risk: 🔴 CRITICAL                                                       │
+│────────────────────────────────────────────────────────────────────────────│
+│ Error Handling & Recovery                                         0% ❌    │
+│  - ErrorBoundary component: untested                                       │
+│  - Error display: untested                                                 │
+│  Risk: 🔴 CRITICAL - App crashes instead of graceful error                │
+│────────────────────────────────────────────────────────────────────────────│
+│ Session Management                                                0% ❌    │
+│  - SessionHandler component: untested                                      │
+│  - Session loss handling: untested                                         │
+│  Risk: 🔴 CRITICAL - Security/UX critical                                │
+│────────────────────────────────────────────────────────────────────────────│
+│ Authorization                                                    80% ✅    │
+│  - Ownership checks: tested ✅                                             │
+│  - Access denial: tested ✅                                                │
+│  Risk: ✅ GOOD                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+KEY FINDINGS
+───────────────────────────────────────────────────────────────────────────────
+
+1. BOTTOM-HEAVY PYRAMID (Inverted Testing)
+   • Domain layer: 100% ✅ - Excellent
+   • Service layer: 88% ⚠️ - Good
+   • API layer: 70% ⚠️ - Adequate
+   • Component layer: 40% ❌ - Insufficient
+   • Page layer: 0% ❌ - None
+   
+   IMPLICATION: High code execution coverage does NOT guarantee features work
+   from user perspective.
+
+2. CODE COVERAGE ≠ BEHAVIOR COVERAGE
+   • Code Coverage: 57.18% (moderate)
+   • Behavior Coverage: ~35% (critical gap)
+   • Gap: User workflows largely untested despite reasonable line coverage
+
+3. CRITICAL UNTESTED COMPONENTS
+   • 7 components with 0% coverage including:
+     - LoginPage (users can't log in!)
+     - DocumentUpload (core feature!)
+     - ErrorBoundary (production safety!)
+     - SessionHandler (security!)
+
+4. SERVICE LAYER HAS GAPS
+   • FileStorageService: 72.72% (missing error paths)
+   • ParserService: 80% (missing edge cases)
+   • Branch coverage gaps: 20-38% even when statement coverage looks good
+
+5. HOOKS MOSTLY UNTESTED
+   • useReport: 12.5% (editing is broken!)
+   • useDocuments: 40% branches (error cases missing)
+   • useDebounce: 0% branches (edge cases not tested)
+
+6. INTEGRATION TESTING MISSING
+   • No tests validating UI → API → Database flows
+   • No page-level tests (no /app/(app)/reports/page.tsx tests)
+   • No end-to-end workflow tests
+
+
+SEVERITY ASSESSMENT
+───────────────────────────────────────────────────────────────────────────────
+
+🔴 CRITICAL (Must Fix Before Production)
+  1. LoginPage (0%) - Users can't authenticate
+  2. DocumentUpload (0%) - Core feature untested
+  3. ErrorBoundary (0%) - App unsafe in production
+  4. SessionHandler (0%) - Session loss not handled
+  5. useReport (12.5%) - Report editing broken
+  6. Document API (0%) - CRUD operations fail tests
+  
+  Time to Fix: ~21 hours
+  Impact: +30% coverage, makes app functional
+
+🟡 HIGH (Fix This Week)
+  1. FileStorageService (72.72%) - Upload reliability unclear
+  2. useDocuments (40% branches) - Error cases untested
+  3. ParserService (80%) - Edge cases missing
+  4. ReportEditor (14.29% gaps) - Error states untested
+  
+  Time to Fix: ~13 hours
+  Impact: +15% coverage, improves reliability
+
+🟠 MEDIUM (Fix Next Week)
+  1. Auth integration (0%) - OAuth flow untested
+  2. Component interactions (40%) - UX not validated
+  3. Branch coverage (38% gap global) - Error paths missing
+  4. Accessibility (0%) - A11y not tested
+  
+  Time to Fix: ~19 hours
+  Impact: +15% coverage, improves maintainability
+
+
+QUICK ACTION ITEMS
+───────────────────────────────────────────────────────────────────────────────
+
+This Week (Priority):
+□ Create LoginPage.test.tsx (4h)
+□ Create DocumentUpload.test.tsx (5h)
+□ Create ErrorBoundary.test.tsx (3h)
+□ Create SessionHandler.test.tsx (4h)
+□ Fix useReport.ts tests (3h)
+□ Fix Document API Prisma setup (2h)
+Total: 21 hours → +30% coverage
+
+Next Week (High Priority):
+□ Add FileStorageService error tests (4h)
+□ Fix useDocuments branch coverage (3h)
+□ Add ParserService edge cases (3h)
+□ Add ReportEditor interaction tests (3h)
+Total: 13 hours → +15% coverage
+
+Following Week (Medium Priority):
+□ Add auth.ts tests (6h)
+□ Add DocumentList tests (3h)
+□ Add navigation tests (2h)
+□ Improve overall branch coverage (4h)
+Total: 15 hours → +15% coverage
+
+
+RECOMMENDED READING
+───────────────────────────────────────────────────────────────────────────────
+
+For detailed analysis: /docs/COVERAGE-VS-BEHAVIOR-ASSESSMENT.md (798 lines)
+For quick reference: /docs/COVERAGE-QUICK-REFERENCE.md
+For implementation guidance: /docs/TDD-GUIDE.md
+
+
+BOTTOM LINE
+───────────────────────────────────────────────────────────────────────────────
+
+Apex has a SOLID FOUNDATION (100% domain/infrastructure) but CRITICAL GAPS in
+user-facing code. The 57% code coverage creates false confidence - the app
+cannot actually be used without untested critical components.
+
+BEFORE LAUNCHING:
+  ✅ Add tests for: Login, Upload, Errors, Sessions
+  ✅ Fix failing Document API tests
+  ✅ Validate critical workflows end-to-end
+  ✅ Add error recovery tests
+
+Estimated effort: ~50 hours to reach 85% coverage and safe production state.
+
+================================================================================

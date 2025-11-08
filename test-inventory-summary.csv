@@ -1,0 +1,21 @@
+File Path,Test Count,Classification,Behavioral %,Red Flags,Red Flag Details
+__tests__/app/api/documents/[id]/route.test.ts,20,Behavioral,100%,0,None
+__tests__/app/api/documents/route.test.ts,16,Behavioral,100%,0,None
+__tests__/app/api/reports/route.test.ts,20,Behavioral,100%,0,None
+__tests__/app/api/reports/[id]/route.test.ts,35,Behavioral,100%,0,None
+__tests__/domain/entities/Report.test.ts,14,Mixed,70%,2,"Line 104: Object reference check (not.toBe), Line 158: Object reference check"
+__tests__/domain/entities/Document.test.ts,15,Mixed,65%,2,"Line 141: Object reference check (not.toBe), Line 158-169: Multiple reference checks"
+__tests__/domain/repositories/ReportRepository.test.ts,20,Behavioral,95%,0,None
+__tests__/domain/repositories/DocumentRepository.test.ts,24,Behavioral,95%,0,None
+__tests__/services/DocumentService.test.ts,18,Behavioral,100%,0,None
+__tests__/infrastructure/repositories/PrismaReportRepository.test.ts,21,Behavioral,100%,0,None
+__tests__/infrastructure/repositories/PrismaDocumentRepository.test.ts,24,Behavioral,100%,0,None
+__tests__/services/ReportService.test.ts,18,Behavioral,100%,0,None
+__tests__/services/ParserService.test.ts,5,Behavioral,100%,0,None
+__tests__/services/FileStorageService.test.ts,6,Behavioral,95%,0,None
+hooks/__tests__/useReports.test.tsx,8,Behavioral,100%,0,None
+hooks/__tests__/useDocuments.test.tsx,6,Behavioral,100%,0,None
+components/documents/__tests__/DocumentList.test.tsx,4,Behavioral,100%,0,None
+components/reports/__tests__/ReportEditor.test.tsx,4,Behavioral,95%,0,None
+components/reports/__tests__/ReportList.test.tsx,12,Behavioral,100%,0,None
+TOTAL,305,N/A,96%,4,All in entity tests - minor stylistic issues
