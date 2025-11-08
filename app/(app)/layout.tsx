@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { AppNav } from '@/components/layout/AppNav';
+import { AppLayoutClient } from '@/components/layout/AppLayoutClient';
 
 export default async function AppLayout({
   children,
@@ -18,14 +19,16 @@ export default async function AppLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session || !session.user) {
     redirect('/login');
   }
 
   return (
     <div className='min-h-screen bg-gray-50'>
       <AppNav user={session.user} />
-      <main>{children}</main>
+      <main>
+        <AppLayoutClient>{children}</AppLayoutClient>
+      </main>
     </div>
   );
 }

@@ -23,7 +23,7 @@ describe('DocumentList', () => {
   });
 
   describe('Loading state', () => {
-    it('should display loading state', () => {
+    it('should display loading skeleton', () => {
       mockUseDocuments.mockReturnValue({
         documents: [],
         isLoading: true,
@@ -32,9 +32,11 @@ describe('DocumentList', () => {
         deleteDocument: { mutateAsync: jest.fn() } as any,
       });
 
-      render(<DocumentList reportId={reportId} />);
+      const { container } = render(<DocumentList reportId={reportId} />);
 
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      // Check for skeleton loading elements
+      const skeletons = container.querySelectorAll('.animate-pulse');
+      expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 
@@ -97,10 +99,7 @@ describe('DocumentList', () => {
   });
 
   describe('Delete functionality', () => {
-    it('should delete document when delete button clicked', async () => {
-      // Mock window.confirm to always return true
-      global.confirm = jest.fn(() => true);
-
+    it('should delete document when delete button clicked and confirmed', async () => {
       const mockDelete = jest.fn().mockResolvedValue({});
 
       mockUseDocuments.mockReturnValue({
@@ -126,12 +125,63 @@ describe('DocumentList', () => {
 
       render(<DocumentList reportId={reportId} />);
 
+      // Click the delete button to open the dialog
       const deleteButton = screen.getByRole('button', { name: /delete/i });
       fireEvent.click(deleteButton);
+
+      // Wait for dialog to appear
+      const confirmButton = await screen.findByRole('button', {
+        name: /delete/i,
+      });
+
+      // Click the confirm button in the dialog
+      fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(mockDelete).toHaveBeenCalledWith('doc-1');
       });
+    });
+
+    it('should not delete document when cancel button clicked', async () => {
+      const mockDelete = jest.fn().mockResolvedValue({});
+
+      mockUseDocuments.mockReturnValue({
+        documents: [
+          {
+            id: 'doc-1',
+            reportId,
+            filename: 'report.pdf',
+            fileHash: 'hash1',
+            storagePath: '/storage/hash1.pdf',
+            parsedContent: 'Content',
+            notes: '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            deletedAt: null,
+          },
+        ],
+        isLoading: false,
+        uploadDocument: { mutateAsync: jest.fn() } as any,
+        updateDocument: { mutateAsync: jest.fn() } as any,
+        deleteDocument: { mutateAsync: mockDelete } as any,
+      });
+
+      render(<DocumentList reportId={reportId} />);
+
+      // Click the delete button to open the dialog
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      fireEvent.click(deleteButton);
+
+      // Wait for dialog to appear and click cancel
+      const cancelButton = await screen.findByRole('button', {
+        name: /cancel/i,
+      });
+      fireEvent.click(cancelButton);
+
+      // Wait a bit to ensure delete is not called
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockDelete).not.toHaveBeenCalled();
     });
   });
 });

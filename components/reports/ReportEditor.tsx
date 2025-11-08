@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useReport } from '@/hooks/useReport';
 import { useDebounce } from '@/hooks/useDebounce';
 import dynamic from 'next/dynamic';
+import { ReportEditorSkeleton } from './ReportEditorSkeleton';
 
 // Dynamically import SimpleMDE to avoid SSR issues
 const SimpleMDE = dynamic(() => import('react-simplemde-editor'), {
@@ -48,7 +49,7 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
   }, [debouncedContent, initialContent, report, updateReport]);
 
   if (isLoading || !report) {
-    return <div className='p-4'>Loading...</div>;
+    return <ReportEditorSkeleton />;
   }
 
   // Determine save status
@@ -82,7 +83,7 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
           onChange={setContent}
           options={{
             spellChecker: false,
-            autosave: { enabled: false },
+            autosave: { enabled: false, uniqueId: reportId },
             placeholder: 'Start writing your report...',
             status: false,
             toolbar: [

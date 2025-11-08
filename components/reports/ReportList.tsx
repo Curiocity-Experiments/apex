@@ -15,6 +15,7 @@ import { ReportCard } from './ReportCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { ReportListSkeleton } from './ReportListSkeleton';
 
 export function ReportList() {
   const { reports, isLoading, createReport } = useReports();
@@ -30,7 +31,16 @@ export function ReportList() {
   };
 
   if (isLoading) {
-    return <div className='p-8'>Loading reports...</div>;
+    return (
+      <div className='p-8'>
+        <div className='mb-6 flex items-center justify-between'>
+          <h1 className='text-3xl font-bold'>Reports</h1>
+        </div>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+          <ReportListSkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

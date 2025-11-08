@@ -43,8 +43,14 @@ export class FileStorageService {
     const storagePath = path.join(dir, `${fileHash}${ext}`);
 
     // Convert File to Buffer if needed
-    const buffer =
-      file instanceof Buffer ? file : Buffer.from(await file.arrayBuffer());
+    let buffer: Buffer;
+    if (file instanceof Buffer) {
+      buffer = file;
+    } else if (typeof (file as File).arrayBuffer === 'function') {
+      buffer = Buffer.from(await (file as File).arrayBuffer());
+    } else {
+      throw new Error('Unsupported file type');
+    }
 
     // Write file to disk
     await fs.writeFile(storagePath, buffer);

@@ -42,16 +42,18 @@ describe('ReportEditor', () => {
   });
 
   describe('Loading state', () => {
-    it('should display loading state', () => {
+    it('should display loading skeleton', () => {
       mockUseReport.mockReturnValue({
         report: undefined,
         isLoading: true,
         updateReport: { mutateAsync: mockUpdateReport } as any,
       });
 
-      render(<ReportEditor reportId='report-1' />);
+      const { container } = render(<ReportEditor reportId='report-1' />);
 
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      // Check for skeleton loading elements
+      const skeletons = container.querySelectorAll('.animate-pulse');
+      expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 
