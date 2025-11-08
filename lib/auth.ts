@@ -10,6 +10,7 @@
 
 import { NextAuthOptions } from 'next-auth';
 import EmailProvider from 'next-auth/providers/email';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/db';
 import { Resend } from 'resend';
@@ -17,18 +18,52 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Don't use adapter in development (CredentialsProvider requires JWT sessions)
+  adapter: process.env.NODE_ENV === 'development' ? undefined : PrismaAdapter(prisma),
   providers: [
-    EmailProvider({
-      server: '', // Not used with Resend
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
-      sendVerificationRequest: async ({ identifier: email, url }) => {
-        try {
-          await resend.emails.send({
+    // Development-only: Email login without magic link
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          CredentialsProvider({
+            id: 'dev-login',
+            name: 'Development Login',
+            credentials: {
+              email: { label: 'Email', type: 'email' },
+            },
+            async authorize(credentials) {
+              if (!credentials?.email) return null;
+
+              // Find or create user for development
+              const user = await prisma.user.upsert({
+                where: { email: credentials.email },
+                update: {},
+                create: {
+                  email: credentials.email,
+                  name: credentials.email.split('@')[0],
+                  provider: 'dev',
+                },
+              });
+
+              return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+              };
+            },
+          }),
+        ]
+      : [
+          // Production-only: Magic link email provider
+          EmailProvider({
+            server: '', // Not used with Resend
             from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
-            to: email,
-            subject: 'Sign in to Apex',
-            html: `
+            sendVerificationRequest: async ({ identifier: email, url }) => {
+              try {
+                await resend.emails.send({
+                  from: process.env.RESEND_FROM_EMAIL || 'noreply@apex.dev',
+                  to: email,
+                  subject: 'Sign in to Apex',
+                  html: `
               <!DOCTYPE html>
               <html>
                 <head>
@@ -56,18 +91,27 @@ export const authOptions: NextAuthOptions = {
                 </body>
               </html>
             `,
-          });
-        } catch (error) {
-          console.error('Failed to send magic link email:', error);
-          throw new Error('Failed to send verification email');
-        }
-      },
-    }),
+                });
+              } catch (error) {
+                console.error('Failed to send magic link email:', error);
+                throw new Error('Failed to send verification email');
+              }
+            },
+          }),
+        ]),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      // Add user id to JWT token on sign in
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, user, token }) {
+      // Add user id to session from either database user or JWT token
       if (session.user) {
-        session.user.id = user.id;
+        session.user.id = user?.id || token?.id;
       }
       return session;
     },
@@ -78,7 +122,8 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   session: {
-    strategy: 'database',
+    // Use JWT in development (required for CredentialsProvider), database in production
+    strategy: process.env.NODE_ENV === 'development' ? 'jwt' : 'database',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 };

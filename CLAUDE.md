@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Curiocity is a Next.js application for document and resource management with parsing capabilities. It uses AWS services (DynamoDB, S3) for storage and NextAuth for authentication.
+Apex is a Next.js application for research document management with AI-powered parsing capabilities. Built for financial analysts to organize research reports, upload documents, and leverage intelligent document processing.
 
-**Tech Stack:** Next.js 14, TypeScript, AWS (DynamoDB + S3), NextAuth, Tailwind CSS
+**Tech Stack:** Next.js 14, TypeScript, PostgreSQL, Prisma, NextAuth, Tailwind CSS
 
 ## Development Commands
 
@@ -18,112 +18,182 @@ npm run build        # Build for production
 npm start            # Start production server
 ```
 
+### Local Development Setup
+
+```bash
+npm run local:setup         # Complete local setup (one command)
+npm run local:db:start      # Start PostgreSQL container
+npm run local:db:stop       # Stop PostgreSQL container
+npm run local:db:reset      # Reset database and reseed
+```
+
 ### Testing and Linting
 
 ```bash
 npm test             # Run Jest tests
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint
+npm run format       # Format code with Prettier
 ```
 
-**Note:** ESLint and TypeScript checks are currently ignored during builds (see `next.config.js`). TypeScript strict mode is enabled but errors don't block builds.
-
-### Code Formatting
+### Database Management
 
 ```bash
-npx prettier --write <file>   # Format specific files
-```
-
-Prettier is configured with Tailwind CSS plugin. Pre-commit hooks run via Husky with lint-staged.
-
-### Deployment
-
-```bash
-vercel --prod --force    # Manual deployment to Vercel
+npx prisma studio           # Open Prisma Studio (database GUI)
+npx prisma migrate dev      # Create new migration
+npx prisma generate         # Generate Prisma Client
+npm run db:seed             # Seed database with sample data
 ```
 
 ## Architecture
 
+### Clean Architecture
+
+The application follows Clean Architecture principles:
+
+```
+Presentation Layer (React Components)
+         ↓
+   Use Cases (Business Logic)
+         ↓
+ Repository Interfaces (Contracts)
+         ↓
+Prisma Repositories (Implementation)
+         ↓
+   PostgreSQL Database
+```
+
+**Directory Structure:**
+- `domain/` - Business logic (entities, repositories, use-cases)
+- `infrastructure/` - Implementation details (Prisma repositories)
+- `app/` - Next.js App Router pages and API routes
+- `components/` - React components
+- `lib/` - Shared utilities (db.ts for Prisma client, auth.ts for NextAuth)
+
 ### Data Model
 
-The application uses three main DynamoDB tables:
+The application uses **content deduplication** for efficient storage.
 
-- **Documents**: Top-level containers organizing resources into folders
-- **Resources**: Actual file content stored as markdown (from parsing) with S3 URLs
-- **ResourceMeta**: Metadata for resources (name, notes, tags, summary, dates)
+#### Core Models (see `prisma/schema.prisma`)
 
-Key types defined in `types/types.tsx`:
+- **User**: User account with email, name, provider, avatar
+- **Session**: NextAuth session management
+- **Report**: Research report with markdown content and tags
+- **Document**: Uploaded file with hash, storage path, and parsed content
+- **ReportTag**: Tags for categorizing reports
+- **DocumentTag**: Tags for categorizing documents
 
-- `Document`: Contains folders, each with multiple resources
-- `Resource`: File content with id, markdown, and S3 url
-- `ResourceMeta`: Metadata linking to both resource and document
-- `ResourceCompressed`: Lightweight resource representation for listings
+#### Key Relationships
+
+```
+User (1) -----> (*) Report
+Report (1) ---> (*) Document
+Report (1) ---> (*) ReportTag
+Document (1) --> (*) DocumentTag
+```
+
+#### Deduplication Strategy
+
+- Documents are identified by SHA-256 hash (`fileHash` column)
+- Unique constraint on `(reportId, fileHash)` prevents duplicates within a report
+- Same file content stored once, referenced multiple times
 
 ### Application Structure
 
 ```
 app/
 ├── api/                          # Next.js API routes
-│   ├── auth/[...nextauth]/      # NextAuth configuration (Google + Credentials)
-│   ├── db/                       # Database operations
-│   │   ├── documents/           # Document CRUD operations
-│   │   ├── resource/            # Resource operations
-│   │   ├── resourcemeta/        # ResourceMeta CRUD
-│   │   └── route.ts             # Shared DynamoDB helpers (getObject, putObject)
-│   ├── resource_parsing/        # LlamaCloud API integration for parsing
-│   ├── s3-upload/               # S3 file upload handling
-│   └── user/                    # User profile operations
-├── report-home/                 # Main application page (post-login)
-├── login/                       # Login page
-└── signup/                      # Signup page
+│   ├── auth/[...nextauth]/      # NextAuth configuration
+│   ├── reports/                 # Report CRUD endpoints
+│   └── documents/               # Document CRUD endpoints
+├── (auth)/                      # Auth pages (login, signup)
+│   └── login/
+└── (dashboard)/                 # Protected dashboard pages
+    └── reports/
 
 components/
-├── DocumentComponents/          # Document management UI
-├── ResourceComponents/          # Resource viewing/editing UI
-├── GeneralComponents/           # Shared UI components
-├── ModalComponents/             # Modal dialogs
+├── reports/                     # Report management UI
+├── documents/                   # Document viewing/editing UI
 └── ui/                         # shadcn/ui components
 
-context/
-├── AppContext.tsx              # Resources and Documents state
-├── AuthContext.tsx             # NextAuth SessionProvider wrapper
-└── SwitchContext.tsx           # UI state management
+domain/
+├── entities/                    # Domain entities (Report, Document, User)
+├── repositories/                # Repository interfaces
+└── use-cases/                   # Application use cases
+
+infrastructure/
+└── repositories/                # Prisma repository implementations
+
+lib/
+├── db.ts                       # Prisma client singleton
+└── auth.ts                     # NextAuth configuration
+
+prisma/
+├── schema.prisma               # Database schema
+├── migrations/                 # Database migrations
+└── seed.ts                     # Seed script with sample data
 ```
 
 ### Authentication
 
-- **NextAuth** configuration at `app/api/auth/[...nextauth]/route.ts`
-- Supports Google OAuth and email/password credentials
-- Middleware (`middleware.ts`) redirects unauthenticated users from root to `/login`
-- User data stored in two DynamoDB tables: `curiocity-users` and `curiocity-local-login-users`
+- **NextAuth** configuration at `lib/auth.ts` and `app/api/auth/[...nextauth]/route.ts`
+- Supports:
+  - Google OAuth
+  - LinkedIn OAuth
+  - Magic Link (passwordless email authentication via Resend)
+- Session management via database sessions (Prisma adapter)
+- User data stored in `users` and `sessions` tables
 
-### State Management
+### Database (PostgreSQL + Prisma)
 
-Three React Context providers wrap the application (see `app/layout.tsx`):
+**Connection:**
+- Development: Docker container on `localhost:54320`
+- Configuration: `lib/db.ts` (Prisma client singleton)
+- Connection string: `DATABASE_URL` environment variable
 
-- **AuthProvider**: NextAuth session management
-- **CurrentResourceProvider** (AppContext): Manages current resource/meta, file uploads, and S3 operations
-- **SwitchProvider**: UI state (view switching between documents/resources)
+**Migrations:**
+- Stored in `prisma/migrations/`
+- Run with: `npx prisma migrate dev`
+- Deploy with: `npx prisma migrate deploy`
 
-### AWS Integration
+**Schema:**
+- Defined in `prisma/schema.prisma`
+- Uses PostgreSQL-specific features (UUIDs, indexes)
+- Soft deletes via `deletedAt` columns on Reports and Documents
 
-**DynamoDB**: AWS SDK v3 (`@aws-sdk/client-dynamodb`, `@aws-sdk/lib-dynamodb`)
+**Common Operations:**
 
-- Connection initialized in API routes with region `us-west-1`
-- Table names from environment variables: `DOCUMENT_TABLE`, `RESOURCEMETA_TABLE`, `RESOURCE_TABLE`
-- Common operations in `app/api/db/route.ts`: `getObject`, `putObject`, `deleteObject`
+```typescript
+import { prisma } from '@/lib/db';
 
-**S3**: File storage with `next-s3-upload` library
+// Get all reports for a user
+const reports = await prisma.report.findMany({
+  where: {
+    userId: user.id,
+    deletedAt: null,
+  },
+  include: {
+    reportTags: true,
+    _count: { select: { documents: true } },
+  },
+  orderBy: { createdAt: 'desc' },
+});
+```
 
-- Bucket: `wdb-curiocity-bucket` (region `us-west-1`)
-- Files uploaded via `app/api/s3-upload/` endpoint
-- Image domains configured in `next.config.js`
+### File Storage
 
-### Resource Parsing
+- **Local filesystem** storage (not S3)
+- Storage path: `./storage/` (configurable via `STORAGE_PATH` env var)
+- Files organized by hash to prevent duplicates
+- Path stored in `Document.storagePath`
 
-- Files parsed using **LlamaCloud API** (LlamaIndex)
-- Endpoint: `app/api/resource_parsing/route.ts`
-- Parsing can be disabled via `DISABLE_PARSING` environment variable
-- Known issue: Some files are skipped or parsed unnecessarily
+### Document Parsing
+
+- Files parsed using **LlamaCloud API** (optional)
+- Configuration: `LLAMA_CLOUD_API_KEY` environment variable
+- Parsing can be disabled if API key not provided
+- Parsed content stored in `Document.parsedContent` (markdown format)
 
 ## Important Patterns
 
@@ -141,45 +211,98 @@ import { someUtil } from '@/lib/utils';
 ### API Route Pattern
 
 ```typescript
-// app/api/some-endpoint/route.ts
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { getObject, putObject } from '../route'; // Shared helpers
-
-const client = new DynamoDBClient({ region: 'us-west-1' });
+// app/api/reports/route.ts
+import { prisma } from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  // ... implementation
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const reports = await prisma.report.findMany({
+    where: { userId: session.user.id },
+  });
+
+  return Response.json(reports);
 }
 ```
 
-### Context Usage
+### Repository Pattern
 
 ```typescript
-// In components:
-import { useCurrentResource } from '@/context/AppContext';
+// domain/repositories/IReportRepository.ts
+export interface IReportRepository {
+  findById(id: string): Promise<Report | null>;
+  findByUserId(userId: string): Promise<Report[]>;
+  create(data: CreateReportDTO): Promise<Report>;
+}
 
-const { currentResource, fetchResourceAndMeta } = useCurrentResource();
+// infrastructure/repositories/PrismaReportRepository.ts
+export class PrismaReportRepository implements IReportRepository {
+  async findById(id: string): Promise<Report | null> {
+    return await prisma.report.findUnique({ where: { id } });
+  }
+}
+```
+
+### Use Case Pattern
+
+```typescript
+// domain/use-cases/CreateReportUseCase.ts
+export class CreateReportUseCase {
+  constructor(private reportRepository: IReportRepository) {}
+
+  async execute(data: CreateReportDTO): Promise<Report> {
+    return await this.reportRepository.create(data);
+  }
+}
 ```
 
 ## Known Issues
 
-1. **File Upload Bug**: Files occasionally fail to upload with Error 413 (likely in `components/ResourceComponents/S3Button.tsx` - `UploadAllFiles` function)
-2. **Parsing Issues**: Files sometimes skipped or unnecessarily parsed
-3. **Import Standardization**: Not all files use `@/*` path aliases consistently
-4. **Mobile Responsiveness**: Not implemented for devices smaller than laptop screens
+1. **TypeScript/ESLint in Builds**: Errors don't block builds (see `next.config.js`). Intentional for rapid iteration but should be fixed before production.
+
+2. **Mobile Responsiveness**: Not implemented for devices smaller than laptop screens.
+
+3. **File Parsing**: LlamaCloud parsing is optional. Can be disabled if API key not provided.
 
 ## Environment Variables
 
-Required variables (see `.env` - not in repo):
+Required variables for local development (see `.env.local.example`):
 
-- `NEXTAUTH_URL`: Application URL (localhost:3000 for dev, Vercel URL for prod)
-- `NEXTAUTH_SECRET`: NextAuth secret key
-- `GOOGLE_ID`, `GOOGLE_SECRET`: Google OAuth credentials
-- `DOCUMENT_TABLE`, `RESOURCEMETA_TABLE`, `RESOURCE_TABLE`: DynamoDB table names
-- `S3_UPLOAD_REGION`, `S3_UPLOAD_KEY`, `S3_UPLOAD_SECRET`: S3 credentials
-- `LLAMA_CLOUD_API_KEY`: LlamaCloud API for parsing
-- `DISABLE_PARSING`: Set to `true` to disable resource parsing
+```bash
+# Database
+DATABASE_URL=postgresql://postgres:devpassword@localhost:54320/apex_dev
+
+# NextAuth
+NEXTAUTH_URL=http://localhost:3100
+NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
+
+# Optional: Google OAuth
+GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-...
+
+# Optional: LinkedIn OAuth
+LINKEDIN_CLIENT_ID=...
+LINKEDIN_CLIENT_SECRET=...
+
+# Optional: Email (Magic Links)
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
+# Optional: Document Parsing
+LLAMA_CLOUD_API_KEY=llx-...
+
+# Optional: Analytics
+NEXT_PUBLIC_POSTHOG_KEY=phc_...
+NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+
+# File Storage
+STORAGE_PATH=./storage
+```
 
 ## Testing
 
@@ -187,15 +310,112 @@ Required variables (see `.env` - not in repo):
 
 **Commands**: `npm test` | `npm test:watch` | `npm test:coverage`
 
-## Test Configuration
+### Test Configuration
 
 - **Jest** configured with `ts-jest` and `jsdom` environment
 - Test files: `**/__tests__/**/*.test.ts(x)`
-- Setup file: `setupTests.ts`
+- Setup file: `jest.setup.js`
 - Run single test: `npm test -- path/to/test.test.ts`
+
+### Testing Patterns
+
+**Use Case Tests:**
+```typescript
+import { CreateReportUseCase } from '@/domain/use-cases/CreateReportUseCase';
+
+describe('CreateReportUseCase', () => {
+  it('creates report with valid data', async () => {
+    const mockRepo = /* mock repository */;
+    const useCase = new CreateReportUseCase(mockRepo);
+
+    const result = await useCase.execute({
+      userId: 'user-123',
+      name: 'Q4 Analysis',
+      content: '# Content',
+    });
+
+    expect(result.name).toBe('Q4 Analysis');
+  });
+});
+```
+
+**API Route Tests:**
+```typescript
+import { createMocks } from 'node-mocks-http';
+import { GET } from '@/app/api/reports/route';
+
+describe('GET /api/reports', () => {
+  it('returns reports for authenticated user', async () => {
+    const { req } = createMocks({ method: 'GET' });
+    const response = await GET(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toBeInstanceOf(Array);
+  });
+});
+```
 
 ## Code Style
 
 - **Prettier**: 80 char line width, single quotes, trailing commas, Tailwind CSS class sorting
 - **ESLint**: Next.js config with `@typescript-eslint/no-explicit-any` disabled
 - **Pre-commit hooks**: Husky + lint-staged runs ESLint and Prettier on staged files
+
+## Local Development Workflow
+
+### Initial Setup
+
+```bash
+# 1. Clone and install
+git clone https://github.com/Curiocity-Experiments/apex.git
+cd apex
+npm install
+
+# 2. Setup local environment (one command)
+npm run local:setup
+
+# 3. Start development server
+npm run dev
+```
+
+### Day-to-Day Development
+
+```bash
+# Start database (if not running)
+npm run local:db:start
+
+# Start dev server
+npm run dev
+
+# Run tests in watch mode
+npm run test:watch
+
+# View database in Prisma Studio
+npx prisma studio
+```
+
+### Database Changes
+
+```bash
+# 1. Edit prisma/schema.prisma
+# 2. Create migration
+npx prisma migrate dev --name add_new_field
+
+# 3. Prisma Client is auto-generated
+# 4. Use in code immediately
+```
+
+### Resetting Database
+
+```bash
+# Reset and reseed (deletes all data!)
+npm run local:db:reset
+```
+
+## Additional Resources
+
+- **[Developer Guide](./docs/DEVELOPER-GUIDE.md)** - Complete implementation guide
+- **[Database Schema](./docs/DATABASE-SCHEMA.md)** - Detailed schema documentation
+- **[Database Quick Start](./docs/DATABASE-QUICKSTART.md)** - Database setup guide
+- **[TDD Guide](./docs/TDD-GUIDE.md)** - Testing best practices

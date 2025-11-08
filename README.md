@@ -1,299 +1,144 @@
-# Curiocity
+# Apex
 
-A Next.js application for document and resource management with intelligent file parsing capabilities.
+A Next.js application for research document management with intelligent file parsing capabilities. Built for financial analysts to organize research reports, upload documents, and leverage AI-powered parsing.
 
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
 - [Key Features](#key-features)
-- [Getting Started - Local Development](#getting-started---local-development)
-- [Cloud Deployment Setup](#cloud-deployment-setup)
-- [Environment Variables Reference](#environment-variables-reference)
+- [Quick Start - Local Development](#quick-start---local-development)
+- [Manual Setup (Alternative)](#manual-setup-alternative)
 - [Development Commands](#development-commands)
+- [Project Structure](#project-structure)
+- [Environment Variables](#environment-variables)
+- [Testing](#testing)
+- [Documentation](#documentation)
 - [Known Issues](#known-issues)
 - [Contributing](#contributing)
-- [Contact](#contact)
 
 ## Tech Stack
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe development
-- **AWS DynamoDB** - NoSQL database (5 tables)
-- **AWS S3** - File storage
-- **NextAuth** - Authentication (Google OAuth + Email/Password)
-- **LlamaCloud** - AI-powered document parsing
-- **Tailwind CSS** - Styling
-- **PostHog** - Analytics
+- **PostgreSQL 16** - Relational database
+- **Prisma** - Modern ORM for database access
+- **NextAuth** - Authentication (Google OAuth + Email/Magic Link)
+- **LlamaCloud** - AI-powered document parsing (optional)
+- **Tailwind CSS** - Utility-first styling
+- **PostHog** - Analytics (optional)
+- **Resend** - Email delivery for magic links
 
 ## Key Features
 
-- **Document Management** - Organize resources into documents with folder structures
-- **Resource Upload** - Upload files with automatic AI parsing to markdown
-- **Content Deduplication** - Intelligent file storage to avoid duplicates
-- **Rich Metadata** - Add notes, tags, and summaries to resources
-- **Search & Filtering** - Filter by file type, date range, and search by name
-- **Authentication** - Sign in with Google or email/password
-- **Analytics** - Track usage with PostHog
+- **Report Management** - Create and organize research reports with rich markdown content
+- **Document Upload** - Upload files with automatic AI parsing to markdown
+- **Content Deduplication** - Intelligent file storage using hash-based deduplication
+- **Rich Metadata** - Add notes and tags to both reports and documents
+- **Search & Filtering** - Filter by tags, date range, and search by name
+- **Authentication** - Sign in with Google OAuth or magic link email
+- **Analytics** - Track usage with PostHog (optional)
 
 ---
 
-## Getting Started - Local Development
+## Quick Start - Local Development
 
-**No AWS account needed for local development!** We use LocalStack to emulate AWS services.
+**No cloud services needed!** Everything runs locally with Docker.
 
 ### Prerequisites
 
-- **Node.js 18.x** - [Download here](https://nodejs.org/)
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **npm 9+** (comes with Node.js)
 - **Docker** - [Download here](https://www.docker.com/products/docker-desktop/)
-- **npm** (comes with Node.js)
 
-### Step 1: Clone the Repository
+### One-Command Setup
 
 ```bash
-git clone https://github.com/wdbxcuriocity/curiocity.git
-cd curiocity
+# 1. Clone the repository
+git clone https://github.com/Curiocity-Experiments/apex.git
+cd apex
+
+# 2. Install dependencies
+npm install
+
+# 3. Run the setup script (starts PostgreSQL, runs migrations, creates storage)
+npm run local:setup
+
+# 4. Start the development server
+npm run dev
 ```
 
-### Step 2: Install Dependencies
+Visit [http://localhost:3100](http://localhost:3100) 🎉
+
+**That's it!** The `local:setup` script will:
+- ✅ Create `.env.local` from the example file
+- ✅ Start PostgreSQL in Docker
+- ✅ Run database migrations
+- ✅ Generate Prisma Client
+- ✅ Create storage directory
+- ✅ Optionally seed the database with sample data
+
+---
+
+## Manual Setup (Alternative)
+
+If you prefer to set up step-by-step:
+
+### Step 1: Clone and Install
 
 ```bash
+git clone https://github.com/Curiocity-Experiments/apex.git
+cd apex
 npm install
 ```
 
-### Step 3: Start LocalStack (AWS Emulator)
-
-Start Docker, then run:
-
-```bash
-docker-compose up -d
-```
-
-This starts LocalStack with DynamoDB and S3 services on `localhost:4566`.
-
-To verify it's running:
-
-```bash
-docker ps
-```
-
-You should see a container named `curiocity-localstack`.
-
-### Step 4: Initialize Local Database and Storage
-
-```bash
-npm run local:setup
-```
-
-This creates:
-- 5 DynamoDB tables (users, documents, resources, etc.)
-- S3 bucket for file storage
-- CORS configuration
-
-### Step 5: Configure Environment Variables
+### Step 2: Configure Environment
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-**Edit `.env.local` and set:**
+Edit `.env.local` and set `NEXTAUTH_SECRET`:
 
 ```bash
-# Required - Generate a random string
-NEXTAUTH_SECRET=your-secret-here
+# Generate a secret
+openssl rand -base64 32
 
-# Optional - Only if you want Google OAuth
-GOOGLE_ID=your-google-client-id
-GOOGLE_SECRET=your-google-client-secret
-
-# Optional - Only if you want file parsing
-LLAMA_CLOUD_API_KEY=your-llama-api-key
-DISABLE_PARSING=false  # Set to true to skip parsing
+# Add to .env.local
+NEXTAUTH_SECRET=your-generated-secret-here
 ```
 
-> **Note:** For local development, you can use email/password authentication without Google OAuth, and you can disable file parsing. The default values in `.env.local.example` work out of the box!
+### Step 3: Start PostgreSQL
 
-### Step 6: Run the Development Server
+```bash
+npm run local:db:start
+```
+
+This starts PostgreSQL in Docker on port 54320.
+
+### Step 4: Run Migrations
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+```
+
+### Step 5: Create Storage Directory
+
+```bash
+mkdir -p storage
+```
+
+### Step 6: (Optional) Seed Database
+
+```bash
+npm run db:seed
+```
+
+### Step 7: Start Development Server
 
 ```bash
 npm run dev
 ```
-
-Visit [http://localhost:3000](http://localhost:3000) 🎉
-
-### Local Development Notes
-
-- **Database**: LocalStack DynamoDB on `localhost:4566`
-- **File Storage**: LocalStack S3 on `localhost:4566`
-- **Authentication**: Email/password works without Google OAuth setup
-- **File Parsing**: Can be disabled with `DISABLE_PARSING=true`
-- **Analytics**: PostHog is optional for local development
-
-### Stopping LocalStack
-
-```bash
-docker-compose down
-```
-
-To also delete all data:
-
-```bash
-docker-compose down -v
-rm -rf localstack-data/
-```
-
----
-
-## Cloud Deployment Setup
-
-For production deployment to Vercel with real AWS services.
-
-### Prerequisites
-
-- Vercel account
-- AWS account with DynamoDB and S3 access
-- Google OAuth credentials (optional)
-- LlamaCloud API key (optional)
-- PostHog account (optional)
-
-### AWS Setup
-
-#### 1. Create DynamoDB Tables
-
-Create 5 tables in AWS Console (region: `us-west-1`):
-
-| Table Name | Partition Key | Type |
-|------------|---------------|------|
-| `curiocity-users` | `id` | String |
-| `curiocity-local-login-users` | `email` | String |
-| `curiocity-documents` | `id` | String |
-| `curiocity-resources` | `id` | String |
-| `curiocity-resourcemeta` | `id` | String |
-
-**Billing mode:** On-demand (PAY_PER_REQUEST)
-
-#### 2. Create S3 Bucket
-
-1. Create bucket: `wdb-curiocity-bucket` (or your own name)
-2. Region: `us-west-1`
-3. Enable public read access for uploaded files
-4. Add CORS configuration:
-
-```json
-[
-  {
-    "AllowedHeaders": ["*"],
-    "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
-    "AllowedOrigins": ["*"],
-    "ExposeHeaders": ["ETag"]
-  }
-]
-```
-
-#### 3. Get AWS Credentials
-
-Create an IAM user with:
-- DynamoDB full access
-- S3 full access
-
-Save the Access Key ID and Secret Access Key.
-
-### Google OAuth Setup (Optional)
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create OAuth 2.0 Client ID
-3. Add authorized redirect URI: `https://your-domain.com/api/auth/callback/google`
-4. Save Client ID and Client Secret
-
-### LlamaCloud Setup (Optional)
-
-1. Sign up at [LlamaIndex Cloud](https://cloud.llamaindex.ai/)
-2. Generate API key
-3. Or set `DISABLE_PARSING=true` to skip parsing
-
-### Vercel Deployment
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod --force
-```
-
-### Environment Variables for Vercel
-
-In Vercel project settings, add:
-
-```bash
-# NextAuth
-NEXTAUTH_URL=https://your-vercel-url.vercel.app
-NEXTAUTH_SECRET=your-production-secret
-
-# Google OAuth
-GOOGLE_ID=your-google-client-id
-GOOGLE_SECRET=your-google-client-secret
-
-# AWS DynamoDB
-DOCUMENT_TABLE=curiocity-documents
-RESOURCE_TABLE=curiocity-resources
-RESOURCEMETA_TABLE=curiocity-resourcemeta
-
-# AWS S3
-S3_UPLOAD_REGION=us-west-1
-S3_UPLOAD_KEY=your-aws-access-key
-S3_UPLOAD_SECRET=your-aws-secret-key
-S3_UPLOAD_BUCKET=wdb-curiocity-bucket
-
-# LlamaCloud (optional)
-LLAMA_CLOUD_API_KEY=your-llama-api-key
-DISABLE_PARSING=false
-
-# PostHog (optional)
-NEXT_PUBLIC_POSTHOG_KEY=your-posthog-key
-NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
-```
-
----
-
-## Environment Variables Reference
-
-### Required for All Environments
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NEXTAUTH_URL` | Application URL | `http://localhost:3000` |
-| `NEXTAUTH_SECRET` | Secret for JWT signing | Generate with `openssl rand -base64 32` |
-| `DOCUMENT_TABLE` | DynamoDB documents table | `curiocity-documents` |
-| `RESOURCE_TABLE` | DynamoDB resources table | `curiocity-resources` |
-| `RESOURCEMETA_TABLE` | DynamoDB metadata table | `curiocity-resourcemeta` |
-
-### Optional Services
-
-| Variable | Description | Required For |
-|----------|-------------|--------------|
-| `GOOGLE_ID` | Google OAuth Client ID | Google sign-in |
-| `GOOGLE_SECRET` | Google OAuth Secret | Google sign-in |
-| `LLAMA_CLOUD_API_KEY` | LlamaCloud API key | File parsing |
-| `DISABLE_PARSING` | Disable parsing (`true`/`false`) | Skip parsing |
-| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key | Analytics |
-| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | Analytics |
-
-### Local Development Only
-
-| Variable | Description | Value |
-|----------|-------------|-------|
-| `AWS_ACCESS_KEY_ID` | LocalStack credential | `test` |
-| `AWS_SECRET_ACCESS_KEY` | LocalStack credential | `test` |
-| `AWS_ENDPOINT_URL` | LocalStack endpoint | `http://localhost:4566` |
-
-### Production Only
-
-| Variable | Description |
-|----------|-------------|
-| `S3_UPLOAD_KEY` | AWS Access Key ID |
-| `S3_UPLOAD_SECRET` | AWS Secret Access Key |
-| `S3_UPLOAD_REGION` | S3 bucket region |
-| `S3_UPLOAD_BUCKET` | S3 bucket name |
 
 ---
 
@@ -305,124 +150,220 @@ NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 npm run dev          # Start development server with Turbo
 npm run build        # Build for production
 npm start            # Start production server
-```
-
-### Testing and Linting
-
-```bash
-npm test             # Run Jest tests
 npm run lint         # Run ESLint
+npm run format       # Format code with Prettier
 ```
 
-### Local Environment Management
+### Database Management
 
 ```bash
-npm run local:setup  # Initialize DynamoDB tables + S3 bucket
-npm run local:db     # Initialize only DynamoDB tables
-npm run local:s3     # Initialize only S3 bucket
+npm run local:setup         # Complete local setup (one command)
+npm run local:db:start      # Start PostgreSQL container
+npm run local:db:stop       # Stop PostgreSQL container
+npm run local:db:restart    # Restart PostgreSQL container
+npm run local:db:reset      # Reset database and reseed
+npm run local:db:logs       # View PostgreSQL logs
+
+npx prisma studio           # Open Prisma Studio (database GUI)
+npx prisma migrate dev      # Create new migration
+npx prisma generate         # Generate Prisma Client
+npm run db:seed             # Seed database with sample data
 ```
 
-### Code Formatting
+### Testing
 
 ```bash
-npx prettier --write <file>   # Format specific files
-```
-
-Pre-commit hooks automatically run ESLint and Prettier via Husky.
-
-### Deployment
-
-```bash
-vercel --prod --force    # Manual deployment to Vercel
+npm test                    # Run all tests
+npm run test:watch          # Run tests in watch mode
+npm run test:coverage       # Run tests with coverage
+npm run test:unit           # Run unit tests only
+npm run test:integration    # Run integration tests only
 ```
 
 ---
 
-## File Structure
+## Project Structure
 
 ```
-curiocity/
+apex/
 ├── app/
-│   ├── api/                    # API routes (28 endpoints)
-│   │   ├── auth/               # NextAuth configuration
-│   │   ├── db/                 # Database operations
-│   │   ├── resource_parsing/   # LlamaCloud integration
-│   │   ├── s3-upload/          # S3 file upload
-│   │   └── user/               # User management
-│   ├── login/                  # Login page
-│   ├── signup/                 # Signup page
-│   └── report-home/            # Main application
+│   ├── api/                    # API routes
+│   │   ├── auth/              # NextAuth configuration
+│   │   ├── reports/           # Report endpoints
+│   │   └── documents/         # Document endpoints
+│   ├── (auth)/                # Auth pages (login)
+│   └── (dashboard)/           # Protected dashboard pages
 ├── components/
-│   ├── DocumentComponents/     # Document UI
-│   ├── ResourceComponents/     # Resource UI
-│   ├── GeneralComponents/      # Shared components
-│   └── ModalComponents/        # Modal dialogs
-├── context/
-│   ├── AppContext.tsx          # Resource & Document state
-│   ├── AuthContext.tsx         # Auth state
-│   └── SwitchContext.tsx       # UI state
+│   ├── reports/               # Report components
+│   ├── documents/             # Document components
+│   └── ui/                    # Reusable UI components
+├── lib/
+│   ├── db.ts                  # Prisma client singleton
+│   └── auth.ts                # NextAuth configuration
+├── domain/                     # Business logic (clean architecture)
+│   ├── entities/              # Domain entities
+│   ├── repositories/          # Repository interfaces
+│   └── use-cases/             # Application use cases
+├── infrastructure/             # Infrastructure layer
+│   └── repositories/          # Prisma repository implementations
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   ├── migrations/            # Database migrations
+│   └── seed.ts                # Seed script
 ├── scripts/
-│   ├── init-local-db.js        # Initialize local DynamoDB
-│   └── init-local-s3.js        # Initialize local S3
-├── types/
-│   └── types.tsx               # TypeScript definitions
-├── docker-compose.yml          # LocalStack configuration
+│   └── local-setup.sh         # Local development setup
+├── __tests__/                  # Test files
+├── docker-compose.yml          # PostgreSQL container config
 ├── .env.local.example          # Environment template
 └── README.md
 ```
 
 ---
 
-## Known Issues
+## Environment Variables
 
-### 1. File Upload Error 413
+### Required for Local Development
 
-**Issue:** Large file uploads occasionally fail with "Payload Too Large"
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:devpassword@localhost:54320/apex_dev` |
+| `NEXTAUTH_URL` | Application URL | `http://localhost:3100` |
+| `NEXTAUTH_SECRET` | Secret for JWT signing | Generate with `openssl rand -base64 32` |
 
-**Location:** `components/ResourceComponents/S3Button.tsx` (UploadAllFiles function)
+### Optional Services
 
-**Workaround:** Upload smaller files or increase Vercel body size limit
+| Variable | Description | Required For |
+|----------|-------------|--------------|
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | Google sign-in |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Secret | Google sign-in |
+| `LINKEDIN_CLIENT_ID` | LinkedIn OAuth Client ID | LinkedIn sign-in |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth Secret | LinkedIn sign-in |
+| `RESEND_API_KEY` | Resend API key | Magic link emails |
+| `RESEND_FROM_EMAIL` | Email sender address | Magic link emails |
+| `LLAMA_CLOUD_API_KEY` | LlamaCloud API key | Document parsing |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key | Analytics |
+| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | Analytics |
+| `STORAGE_PATH` | Local file storage path | File uploads (default: `./storage`) |
 
-### 2. File Parsing Issues
-
-**Issue:** Some files are skipped or unnecessarily parsed
-
-**Workaround:** Set `DISABLE_PARSING=true` to disable parsing entirely
-
-### 3. TypeScript and ESLint in Production
-
-**Note:** TypeScript errors and ESLint warnings do not block builds (see `next.config.js`)
-
-This is intentional for rapid iteration but should be fixed before production deployment.
-
-### 4. Mobile Responsiveness
-
-**Not implemented** for devices smaller than laptop screens.
+**Note:** The `.env.local.example` file has sensible defaults for local development. You can start developing with just `NEXTAUTH_SECRET` configured.
 
 ---
 
-## Architecture Notes
+## Testing
 
-### Data Model
+Apex follows Test-Driven Development (TDD) principles.
 
-The application uses **content deduplication**:
+**Guides:**
+- [TDD Guide](./docs/TDD-GUIDE.md) - Comprehensive testing guide
+- [Behavior vs Implementation](./docs/TDD-BEHAVIOR-VS-IMPLEMENTATION.md) - Testing philosophy
 
-- **Resource Table**: Stores file content once (keyed by MD5 hash)
-- **ResourceMeta Table**: Stores user-specific metadata (name, notes, tags)
-- Same file uploaded 10 times = 1 Resource + 10 ResourceMeta entries
+**Test Configuration:**
+- **Framework:** Jest with TypeScript support
+- **Environment:** jsdom for React components
+- **Coverage:** Run with `npm run test:coverage`
 
-### Build Configuration
+**Writing Tests:**
 
-ESLint and TypeScript checks are ignored during builds (`next.config.js`):
+```typescript
+// Example: Testing a use case
+import { CreateReportUseCase } from '@/domain/use-cases/CreateReportUseCase';
 
-```javascript
-eslint: {
-  ignoreDuringBuilds: true
-},
-typescript: {
-  ignoreBuildErrors: true
-}
+describe('CreateReportUseCase', () => {
+  it('creates a new report with valid data', async () => {
+    const useCase = new CreateReportUseCase(mockRepository);
+    const result = await useCase.execute({
+      userId: 'user-123',
+      name: 'Q4 Analysis',
+      content: '# Report content',
+    });
+
+    expect(result.name).toBe('Q4 Analysis');
+  });
+});
 ```
+
+---
+
+## Documentation
+
+### Core Documentation
+
+- **[Developer Guide](./docs/DEVELOPER-GUIDE.md)** - Complete implementation guide
+- **[Database Schema](./docs/DATABASE-SCHEMA.md)** - Database design and models
+- **[Database Quick Start](./docs/DATABASE-QUICKSTART.md)** - Database setup guide
+- **[Component Structure](./docs/technical-spec/component-structure.md)** - UI component architecture
+
+### Architecture & Audits
+
+- **[docs/audits/](./docs/audits/)** - Architecture and security audit reports
+- **[CLAUDE.md](./CLAUDE.md)** - Guidance for AI code assistance
+
+---
+
+## Data Model
+
+The application uses **content deduplication** for efficient storage:
+
+### Core Models
+
+- **User** - User account (email, name, provider)
+- **Report** - Research report container (markdown content, tags)
+- **Document** - Uploaded file (filename, content hash, storage path, parsed content)
+- **Tags** - Tags for both reports and documents
+
+### Deduplication Strategy
+
+- Documents are identified by SHA-256 hash of file content
+- Same file uploaded multiple times = stored once
+- Each upload creates a new document record with the same hash
+- Unique constraint on `(reportId, fileHash)` prevents duplicates within a report
+
+**Example:**
+```
+User uploads "earnings.pdf" to Report A → Document 1 created
+User uploads same file to Report B  → Document 2 created (references same content)
+Storage: Only 1 copy of file saved
+```
+
+---
+
+## Architecture
+
+Apex follows **Clean Architecture** principles:
+
+```
+Presentation Layer (React Components)
+         ↓
+   Use Cases (Business Logic)
+         ↓
+ Repository Interfaces (Contracts)
+         ↓
+Prisma Repositories (Implementation)
+         ↓
+      Database
+```
+
+**Benefits:**
+- Business logic independent of frameworks
+- Testable in isolation
+- Easy to swap infrastructure (e.g., change database)
+- Clear separation of concerns
+
+---
+
+## Known Issues
+
+### 1. TypeScript and ESLint in Production
+
+**Note:** TypeScript errors and ESLint warnings do not block builds (see `next.config.js`). This is intentional for rapid iteration but should be fixed before production deployment.
+
+### 2. Mobile Responsiveness
+
+**Not implemented** for devices smaller than laptop screens. Desktop/laptop only for now.
+
+### 3. File Parsing
+
+LlamaCloud parsing is optional. Set `LLAMA_CLOUD_API_KEY` to enable, or skip parsing and use manual notes.
 
 ---
 
@@ -430,31 +371,89 @@ typescript: {
 
 ### Code Style
 
-- **Prettier**: 80 char line width, single quotes
-- **ESLint**: Next.js config
-- **Imports**: Use `@/*` path alias for project root
+- **Prettier:** 80 char line width, single quotes, trailing commas
+- **ESLint:** Next.js config with TypeScript
+- **Imports:** Use `@/*` path alias for project root
 
 ### Pre-commit Hooks
 
-Husky + lint-staged automatically format code on commit.
+Husky + lint-staged automatically run ESLint and Prettier on staged files.
+
+### Development Workflow
+
+1. Create feature branch: `git checkout -b feature/your-feature`
+2. Make changes and write tests
+3. Run tests: `npm test`
+4. Commit with descriptive message
+5. Push and create PR
 
 ---
 
-## Documentation
+## Troubleshooting
 
-- **CLAUDE.md** - Guidance for AI code assistance
-- **codebase-analysis-docs/CODEBASE_KNOWLEDGE.md** - Comprehensive codebase reference (2,868 lines)
-- **docs/audits/** - Architecture audit reports
+### Port 5432 Already in Use
+
+If you have PostgreSQL installed locally:
+
+```bash
+# macOS
+brew services stop postgresql
+
+# Linux
+sudo systemctl stop postgresql
+
+# Or use a different port in docker-compose.yml
+ports:
+  - "5433:5432"  # Use port 5433
+
+# Then update .env.local
+DATABASE_URL="postgresql://postgres:devpassword@localhost:5433/apex_dev"
+```
+
+### Cannot Connect to Database
+
+```bash
+# Check container is running
+docker ps | grep apex-db
+
+# View logs
+npm run local:db:logs
+
+# Restart container
+npm run local:db:restart
+```
+
+### Prisma Client Out of Sync
+
+```bash
+# Regenerate Prisma Client
+npx prisma generate
+
+# If still issues
+rm -rf node_modules/.prisma
+npx prisma generate
+```
+
+---
+
+## Production Deployment
+
+For production deployment to Vercel:
+
+1. **Set environment variables** in Vercel dashboard
+2. **Configure PostgreSQL** (use managed service like Neon, Supabase, or Railway)
+3. **Update `DATABASE_URL`** to production connection string
+4. **Deploy:** `vercel --prod`
+
+**Note:** See [Developer Guide](./docs/DEVELOPER-GUIDE.md) for detailed production deployment instructions.
 
 ---
 
 ## Contact Information
 
-**Created by:**
+**Project:** Apex Research Platform
 
-- **Web Development at Berkeley** - [webatberkeley@gmail.com](mailto:webatberkeley@gmail.com)
-- **Jason Duong** - [jasonduong@berkeley.edu](mailto:jasonduong@berkeley.edu)
-- **Ashley Zheng** - [ashley.zheng@berkeley.edu](mailto:ashley.zheng@berkeley.edu)
+**Issues:** [GitHub Issues](https://github.com/Curiocity-Experiments/apex/issues)
 
 ---
 
